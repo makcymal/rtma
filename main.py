@@ -2,13 +2,30 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi import status, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from python_freeipa import ClientMeta
+from python_freeipa.exceptions import InvalidSessionPassword
 
 
-from backend_app.utils import create_access_token, create_refresh_token
-from backend_app.models import User
+from agg_backend_app.utils import create_access_token, create_refresh_token
+from agg_backend_app.models import User
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:8081",
+]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class ConnectionManager:
@@ -35,21 +52,31 @@ manager = ConnectionManager()
 
 @app.get("/")
 async def get():
-    return 0
+    return {"hello": "hello"}
 
 
-@app.post('/login')
+@app.post('/api/token/login')
 async def login(user: User):
-    client = ClientMeta('ipa1-hlit.jinr.ru')
-    client.login(user.login, user.password)
+    try:
+        client = ClientMeta('ipa1-hlit.jinr.ru')
+        client.login(user.login, user.password)
+    except InvalidSessionPassword:
+        return {
+            "status": "ERROR",
+            "data": None,
+            "details": "Invalid login or password"
+        }
     user_data = client.user_show(user.login)['result']
     user_public_data = {"id": user_data['uid'], 'name': user_data['displayname'], 'mail': user_data['mail'],
                         'homedirectory': user_data['homedirectory']}
-    # добавить обработку ошибки
 
     return {
-        "access_token": create_access_token(user_public_data),
-        "refresh_token": create_refresh_token(user_public_data),
+        "status": "OK",
+        "data": {
+            "access_token": create_access_token(user_public_data),
+            "refresh_token": create_refresh_token(user_public_data)
+        },
+        "details": "OK"
     }
 
 

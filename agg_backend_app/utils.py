@@ -12,6 +12,7 @@ JWT_REFRESH_SECRET_KEY = 'bababuy'  # should be kept secret
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def create_access_token(user_data, expires_delta: int = None) -> str:
     if expires_delta is not None:
         expires_delta = datetime.utcnow() + expires_delta
