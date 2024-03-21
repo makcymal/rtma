@@ -2,31 +2,71 @@
     <header class="head d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
 
       <ul class="nav col text-start">
-        <li><a href="/" type="button" class="btn btn-primary ms-2">Home</a></li>
-        <li><button type="button" class="btn btn-primary me-2 ms-2">Monitoring</button></li>
-        <li><button type="button" class="btn btn-primary me-2">Statistics</button></li>
+        <li><button type="button" class="btn btn-primary ms-2" @click="homePush">Home</button></li>
+        <li><button type="button" class="btn btn-primary me-2 ms-2" @click="monitoringPush">Monitoring</button></li>
+        <li><button type="button" class="btn btn-primary me-2" @click="analiticsPush">Statistics</button></li>
       </ul>
 
       <div class="col text-center">
-          <h1>Traffic Monitoring</h1>
+          <h3>Resources & Traffic Monitoring</h3>
       </div>
 
       <div class="col text-end">
-        <a href="login" type="button" class="btn btn-primary me-2">Login</a>
+        <button type="button" class="btn btn-primary me-2" @click="logoutPush" v-if="this.userAuthenticated">Logout</button>
+        <button type="button" class="btn btn-primary me-2" @click="loginPush" v-if="!this.userAuthenticated">Login</button>
         <!-- <button type="button" class="btn btn-primary">Sign-up</button> -->
       </div>
     </header>
       
 </template>
   
-  <script>
-  export default {
-    name: 'MenuHeader',
-    props: {
-      msg: String
-    }
+<script>
+import {useUserDataStore} from "@/stores/UserDataStore"
+import {mapStores, mapState, mapWritableState } from "pinia";
+import axios from 'axios'
+
+export default {
+  
+  name: 'MenuHeader',
+  computed: {
+    ...mapStores(useUserDataStore),
+    ...mapState(useUserDataStore, ['userAuthenticated']),
+    ...mapWritableState(useUserDataStore, ['userAuthenticated']),
+  },
+  mounted(){
+    console.log(this.userAuthenticated)
+  },
+  methods: {
+    logoutPush (){
+      axios.post(axios.defaults.baseURL + "api/token/logout", {}, { withCredentials: true })
+      .then((response) => {
+            if(response.data.status === "OK"){
+              this.userAuthenticated = false
+              this.$router.push("/");
+            }
+          })
+    },
+    loginPush(){
+      this.$router.push("/login");
+    },
+    homePush(){
+      this.$router.push("/");
+    },
+    monitoringPush(){
+      this.$router.push("/monitoring");
+    },
+    analiticsPush(){
+      this.$router.push("/analitics");
+    },
+    profilePush(){
+      this.$router.push("/profile");
+    },
   }
-  </script>
+  // props: {
+  //   userAuthorized: Boolean
+  // }
+}
+</script>
   
   <!-- Add "scoped" attribute to limit CSS to this component only -->
   <style scoped>
