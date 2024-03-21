@@ -1,15 +1,15 @@
 {
     "interval": 1,
     
-    "cpu_fields": ["system", "user", "nice", "idle", "iowait", "irq", "softirq",  "freq"],
-    "cpu_extended": true,
+    "cpu_fields": ["system", "user", "nice", "idle", "iowait", "freq"],
+    "cpu_extended": false,
     
-    "net_fields": ["bytes", "packets", "drops"],
-    "net_extended": true,
+    "net_fields": ["bytes"],
+    "net_extended": false,
     
-    "mem_fields": ["used", "cached", "shared"],
+    "mem_fields": ["used", "shared"],
     "mem_extended": true,
     
-    "dsk_fields": ["used", "read", "write"],
-    "dsk_extended": true
+    "dsk_fields": ["read", "write"],
+    "dsk_extended": false
 }

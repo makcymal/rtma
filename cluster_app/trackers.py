@@ -1,17 +1,19 @@
 #!python
 
+import os
 from abc import abstractmethod, ABC
 import json
 import psutil as ps
-from copy import deepcopy as cp
 from collections import namedtuple
 
-from utils import Subscriber, Pair
+from utils import Subscriber
 from query import Query
 
 import logging
 
 logger = logging.getLogger(__name__)
+
+BYTES_DENOM = 1024
 
 
 class Tracker(Subscriber, ABC):
@@ -20,6 +22,7 @@ class Tracker(Subscriber, ABC):
 
     def __init__(self):
         Query().subscribe(self)
+        self.specs = {}
         self._fill_specs()
         logger.info(f"Got {str(self)} specs")
 
@@ -30,14 +33,25 @@ class Tracker(Subscriber, ABC):
         self.extended = query[f"{str(self)}_extended"]
         self.fields = set(query[f"{str(self)}_fields"])
         self._validate_query_fields()
+        self.prev = None
+
         logger.info(f"{str(self)}_tracker updated query")
+
+    def _validate_query_fields(self):
+        invalid_fields = self.fields.difference(self.__class__.VALID_FIELDS)
+        if invalid_fields:
+            logger.warning(
+                f"Got invalid fields in query for {self.__class__.__name__}: {list(invalid_fields)}, they will be ignored"
+            )
+            self.fields.difference_update(invalid_fields)
+
+    def _debug_tracking(self, response):
+        if self.debug:
+            with open(f"{str(self)}.json", "w") as file:
+                json.dump(response, file, indent=4)
 
     @abstractmethod
     def _fill_specs(self):
-        pass
-
-    @abstractmethod
-    def _validate_query_fields(self):
         pass
 
     @abstractmethod
@@ -74,14 +88,6 @@ class CpuTracker(Tracker):
         self.specs["min_freq"] = [core.min for core in cpu_freq]
         self.specs["max_freq"] = [core.max for core in cpu_freq]
 
-    def _validate_query_fields(self):
-        invalid_fields = self.fields.difference(self.__class__.VALID_FIELDS)
-        if invalid_fields:
-            logger.warning(
-                f"Got invalid fields in query for CpuTracker: {list(invalid_fields)}, they will be ignored"
-            )
-            self.fields.difference_update(invalid_fields)
-
     def _get_response(self) -> dict:
         response = {}
 
@@ -94,7 +100,9 @@ class CpuTracker(Tracker):
 
         if "freq" in self.fields:
             cpu_freq = ps.cpu_freq(percpu=False)
-            response["freq"] = cpu_freq.current
+            response["freq"] = round(
+                cpu_freq.current * 1000 if cpu_freq.current < 10 else cpu_freq.current
+            )
             logger.debug("Filled cpu_tracker.response with cpu_freq for the entire cpu")
 
         return response
@@ -120,7 +128,10 @@ class CpuTracker(Tracker):
         if "freq" in self.fields:
             cpu_freq_percpu = ps.cpu_freq(percpu=True)
             for core_response, freq in zip(response, cpu_freq_percpu):
-                core_response["freq"] = freq
+                core_response["freq"] = round(
+                    freq.current * 1000 if freq.current < 10 else freq.current
+                )
+
             logger.debug("Filled cpu_tracker.response with cpu_freq per each cpu")
 
         return response
@@ -130,39 +141,11 @@ class CpuTracker(Tracker):
             self._get_response_percpu() if self.extended else self._get_response()
         )
 
-        if self.debug:
-            with open("sensor.json", "a") as file:
-                json.dump(response, file, indent=4)
-
+        self._debug_tracking(response)
         return response
 
 
 class NetTracker(Tracker):
-    """
-    response scheme:
-    {
-        "bytes": (in, out),
-        "packets": (in, out),
-        "errors": (in, out),
-        "drops": (in, out),
-    }
-
-    extended response scheme:
-    {
-        "lo": {
-            "bytes": (in, out),
-            "packets": (in, out),
-            "errors": (in, out),
-            "drops": (in, out),
-        },
-        "eth0": {
-            "bytes": (in, out),
-            "packets": (in, out),
-            "errors": (in, out),
-            "drops": (in, out),
-        },
-    }
-    """
 
     FIELDS_MAP = {
         "bytes": ("bytes_recv", "bytes_sent"),
@@ -176,113 +159,163 @@ class NetTracker(Tracker):
         return "net"
 
     def _fill_specs(self):
-        self.specs = {}
         self.specs["nics"] = list(ps.net_io_counters(pernic=True).keys())
 
-    def _validate_query_fields(self):
-        invalid_fields = self.fields.difference(self.__class__.VALID_FIELDS)
-        if invalid_fields:
-            self.fields.difference_update(invalid_fields)
-            logger.warning(
-                f"Got invalid fields in query for NetTracker: {list(invalid_fields)}, they will be ignored"
-            )
-
-    def _get_io_without_prev(self, io: namedtuple) -> dict:
-        return {
+    def _get_io(self, io: namedtuple, prev: namedtuple) -> dict:
+        mp = self.__class__.FIELDS_MAP
+        response = {
             field: (
-                io._asdict()[self.__class__.FIELDS_MAP[field][0]] / self.interval,
-                io._asdict()[self.__class__.FIELDS_MAP[field][1]] / self.interval,
+                round(
+                    (io._asdict()[mp[field][0]] - prev._asdict()[mp[field][0]])
+                    / self.interval
+                ),
+                round(
+                    (io._asdict()[mp[field][1]] - prev._asdict()[mp[field][1]])
+                    / self.interval
+                ),
             )
             for field in self.fields
         }
-
-    def _get_io_with_prev(self, io: namedtuple, prev: namedtuple) -> dict:
-        return {
-            field: (
-                (
-                    io._asdict()[self.__class__.FIELDS_MAP[field][0]]
-                    - prev._asdict()[self.__class__.FIELDS_MAP[field][0]]
-                )
-                / self.interval,
-                (
-                    io._asdict()[self.__class__.FIELDS_MAP[field][1]]
-                    - prev._asdict()[self.__class__.FIELDS_MAP[field][1]]
-                )
-                / self.interval,
-            )
-            for field in self.fields
-        }
+        return response
 
     def _get_response(self) -> dict:
-        prev = self.specs["prev"]
         net_io = ps.net_io_counters(pernic=False)
-        response = (
-            self._get_io_with_prev(net_io, prev)
-            if prev
-            else self._get_io_without_prev(net_io)
-        )
-        self.specs["prev"] = net_io
+        response = self._get_io(net_io, self.prev) if self.prev else {}
+        self.prev = net_io
         return response
 
     def _get_response_pernic(self) -> dict:
-        prev = self.specs["prev"]
         net_io_pernic = ps.net_io_counters(pernic=True)
         response = (
             {
-                nic: self._get_io_with_prev(net_io, prev[nic])
+                nic: self._get_io(net_io, self.prev[nic])
                 for nic, net_io in net_io_pernic.items()
             }
-            if prev
-            else {
-                nic: self._get_io_without_prev(net_io)
-                for nic, net_io in net_io_pernic.items()
-            }
+            if self.prev
+            else {}
         )
-        self.specs["prev"] = net_io_pernic
+        self.prev = net_io_pernic
         return response
 
     def track(self) -> dict:
-        empty_response = bool(self.specs["prev"])
+        response = (
+            self._get_response_pernic() if self.extended else self._get_response()
+        )
 
-        if self.extended:
-            response = self._get_response_pernic()
-        else:
-            response = self._get_response()
-
-        return {} if empty_response else response
+        self._debug_tracking(response)
+        return response
 
 
+# отслеживание мемов в паблике караси БЕСПЛАТНО
 class MemTracker(Tracker):
+
+    VALID_FIELDS = set(("used", "buffers", "cached", "shared"))
 
     def __str__(self):
         return "mem"
 
     def _fill_specs(self):
-        self.specs["mem_total"] = ps.virtual_memory().total
-        self.specs["swp_total"] = ps.swap_memory().total
+        self.specs["mem_total"] = round(ps.virtual_memory().total / BYTES_DENOM)
+        self.specs["swp_total"] = round(ps.swap_memory().total / BYTES_DENOM)
+
+    def track(self) -> dict:
+        response = {
+            field: round(getattr(ps.virtual_memory(), field) / BYTES_DENOM)
+            for field in self.fields
+        }
+        if self.extended:
+            response["swp_used"] = round(ps.swap_memory().used / BYTES_DENOM)
+
+        self._debug_tracking(response)
+        return response
 
 
 class DskTracker(Tracker):
+
+    VALID_FIELDS = set(("used", "read", "write"))
 
     def __str__(self):
         return "dsk"
 
     def _fill_specs(self):
         partitions = ps.disk_partitions()
-        self.specs["devices"] = [
+        self.specs = [
             {
-                "name": part.device,
+                "name": os.path.basename(part.device),
                 "mountpoint": part.mountpoint,
-                "total": ps.disk_usage(part.mountpoint).total,
+                "total": round(ps.disk_usage(part.mountpoint).total / BYTES_DENOM),
             }
             for part in partitions
         ]
 
+    def _get_response(self):
+        response = {}
+        if "used" in self.fields:
+            response["used"] = round(
+                sum(ps.disk_usage(spec["mountpoint"]).used for spec in self.specs)
+                / BYTES_DENOM
+            )
 
-query = Query()
-net_tracker = NetTracker()
-query.notify_subs()
+        disk_io = ps.disk_io_counters(perdisk=False)
+        if "read" in self.fields:
+            if self.prev:
+                response["read"] = round(
+                    (disk_io.read_bytes - self.prev.read_bytes)
+                    / BYTES_DENOM
+                    / self.interval
+                )
+        if "write" in self.fields:
+            if self.prev:
+                response["write"] = round(
+                    (disk_io.write_bytes - self.prev.write_bytes)
+                    / BYTES_DENOM
+                    / self.interval
+                )
 
+        self.prev = disk_io
+        return response
 
-print(net_tracker.track())
-print(net_tracker.track())
+    def _get_response_perdisk(self):
+        names = [spec["name"] for spec in self.specs]
+        if not self.fields:
+            return {}
+        response = {name: {} for name in names}
+
+        if "used" in self.fields:
+            for name, spec in zip(names, self.specs):
+                response[name].update(
+                    used=round(ps.disk_usage(spec["mountpoint"]).used / BYTES_DENOM)
+                )
+
+        disk_io = ps.disk_io_counters(perdisk=True)
+        if "read" in self.fields:
+            if self.prev:
+                for name in names:
+                    response[name].update(
+                        read=round(
+                            (disk_io[name].read_bytes - self.prev[name].read_bytes)
+                            / BYTES_DENOM
+                            / self.interval
+                        )
+                    )
+        if "write" in self.fields:
+            if self.prev:
+                for name in names:
+                    response[name].update(
+                        write=round(
+                            (disk_io[name].write_bytes - self.prev[name].write_bytes)
+                            / BYTES_DENOM
+                            / self.interval
+                        )
+                    )
+
+        self.prev = disk_io
+        return response
+
+    def track(self) -> dict:
+        response = (
+            self._get_response_perdisk() if self.extended else self._get_response()
+        )
+
+        self._debug_tracking(response)
+        return response
