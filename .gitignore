@@ -318,22 +318,10 @@ pyrightconfig.json
 node_modules/
 npm-debug.log
 yarn-error.log
+package-lock.json
 
 /report
 *.md
 !README.md
 
 # End of https://www.toptal.com/developers/gitignore/api/python,vuejs,redis,visualstudiocode,pycharm
-/.idea/.gitignore
-/frontend_app/.gitignore
-/.idea/misc.xml
-/.idea/rtma.iml
-/.idea/vcs.xml
-/.idea/modules.xml
-/.idea/inspectionProfiles/profiles_settings.xml
-/agg_backend_app/certs/
-frontend_app/package-lock.json
-frontend_app/package-lock.json
-frontend_app/package-lock.json
-frontend_app/package-lock.json
-package-lock.json
