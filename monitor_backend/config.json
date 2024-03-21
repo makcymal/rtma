@@ -1,0 +1,13 @@
+{
+    "interval": 1,
+    "cpu_fields": ["system", "user", "nice", "idle", "iowait"],
+    "cpu_percpu": true,
+    "net_conn_fields": ["fd", "laddr", "raddr", "pid"],
+    "net_conn_statuses": ["ESTABLISHED"],
+    "net_io_fields": ["packets", "errors"],
+    "net_io_pernic": true,
+    "mem_usage_fields": ["used", "cached", "shared"],
+    "swp_usage_fields": ["used"],
+    "dsk_usage_fields": ["used", "read", "write"],
+    "dsk_speed_perdisk": true
+}

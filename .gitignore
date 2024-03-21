@@ -294,7 +294,7 @@ pyrightconfig.json
 *.rdb
 
 ### VisualStudioCode ###
-.vscode/*
+.vscode
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -318,6 +318,10 @@ pyrightconfig.json
 node_modules/
 npm-debug.log
 yarn-error.log
+
+/report
+*.md
+!README.md
 
 # End of https://www.toptal.com/developers/gitignore/api/python,vuejs,redis,visualstudiocode,pycharm
 /.idea/.gitignore
