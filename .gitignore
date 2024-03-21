@@ -4,6 +4,8 @@
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+certs
+.venv
 
 # User-specific stuff
 .idea/**/workspace.xml
@@ -318,3 +320,16 @@ npm-debug.log
 yarn-error.log
 
 # End of https://www.toptal.com/developers/gitignore/api/python,vuejs,redis,visualstudiocode,pycharm
+/.idea/.gitignore
+/frontend_app/.gitignore
+/.idea/misc.xml
+/.idea/rtma.iml
+/.idea/vcs.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/agg_backend_app/certs/
+frontend_app/package-lock.json
+frontend_app/package-lock.json
+frontend_app/package-lock.json
+frontend_app/package-lock.json
+package-lock.json

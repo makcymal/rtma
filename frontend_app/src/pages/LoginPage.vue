@@ -16,6 +16,7 @@
       <input v-model="userPassword" type="password" class="form-control" id="floatingPassword" placeholder="Password">
       <label for="floatingPassword">Password</label>
     </div>
+    <span v-html="errorInfo" class="auth-error"></span>
     <button class="btn btn-primary w-100 py-2" type="submit" @click="loginBtnFunc">Sign in</button>
   </form>
 </main>
@@ -34,6 +35,7 @@ export default {
     return {
       userLogin: "",
       userPassword: "",
+      errorInfo: ""
     }
   },
   mounted() {
@@ -45,10 +47,14 @@ export default {
           .post(axios.defaults.baseURL + "api/token/login", {
             login: this.userLogin,
             password: this.userPassword
-          })
+          }, { withCredentials: true})
           .then((response) => {
-            console.log(response.data);
-            this.$router.push("/"); // TODO: поменять на профиль человека
+            if(response.data.status === "ERROR"){
+                this.errorInfo = response.data.details
+            } else{
+                console.log(response.data);
+                this.$router.push("/"); // TODO: поменять на профиль человека
+            }
           })
 
         }
@@ -77,5 +83,9 @@ export default {
   margin-bottom: 10px;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+}
+
+.auth-error {
+    color: #da1212;
 }
 </style>
