@@ -1,40 +1,45 @@
+#!python
+
 from threading import Lock
 import typing as tp
 from abc import abstractmethod, ABC
+from dataclasses import dataclass
+
+
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class Subscriber(ABC):
-    
+
     @abstractmethod
     def __str__(self):
         pass
 
     @abstractmethod
-    def get_notification(self):
+    def get_update(self):
         pass
 
 
 class Publisher:
 
-    subs: tp.Set[Subscriber]
+    _subs: tp.Set[Subscriber]
 
     def __init__(self):
-        self.subs = set()
+        self._subs = set()
 
     def subscribe(self, sub: Subscriber):
-        self.subs.add(sub)
+        self._subs.add(sub)
         logger.debug(f"{str(sub)} subscribed")
 
     def unsubscribers(self, sub: Subscriber):
-        self.subs.remove(sub)
+        self._subs.remove(sub)
         logger.debug(f"{str(sub)} unsubscribed")
 
     def notify_subs(self):
-        for sub in self.subs:
-            sub.get_notification()
+        for sub in self._subs:
+            sub.get_update()
         logger.debug("Notifying subscribers: ok")
 
 
@@ -48,7 +53,26 @@ class Singleton(type):
             if not cls._instance:
                 instance = super().__call__(*args, **kwargs)
                 cls._instance = instance
-                
-                logger.debug(f"Singleton {cls} accessed for the first time")        
-                        
+
+                logger.debug(f"Singleton {cls} accessed for the first time")
+
         return cls._instance
+
+
+@dataclass(slots=True)
+class Pair:
+    
+    a: float
+    b: float
+    
+    def __sub__(self, other):
+        self.a -= other.a
+        self.b -= other.b
+    
+    def __div__(self, div):
+        self.a /= div
+        self.b /= div
+        
+    def __iter__(self):
+        yield self.a
+        yield self.b

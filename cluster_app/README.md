@@ -7,7 +7,7 @@ Configure monitoring via `config.json` with the following fields:
 - `interval`: the interval between usage statistics reports in seconds
     - default: `1`
     
-- `cpu_fields`: CPU times percentage. Every attribute represents the seconds the CPU has spent in the given mode within time interval
+- `cpu_times_fields`: CPU times percentage. Every attribute represents the seconds the CPU has spent in the given mode within time interval
     - `system` - processes in kernel mode
     - `user` - processes in user mode
     - `nice` - niced (prioritized) processes in user mode
@@ -20,8 +20,11 @@ Configure monitoring via `config.json` with the following fields:
     - `guest_nice` - niced guest
     - default: `["system", "user", "nice", "idle", "iowait"]`
     
-- `cpu_percpu`: whether to display `cpu_fields` per each logical CPU or not
-    - default: `true`
+- `cpu_freq`: CPU current frequency
+    - default: `false`
+    
+- `cpu_percpu`: whether to display `cpu_times_fields` and `cpu_freq` per each logical CPU or not
+    - default: `false`
 
 - `net_conn_fields`: socket connections
     - `fd` - socket file descriptor
@@ -36,17 +39,14 @@ Configure monitoring via `config.json` with the following fields:
     - default: `["ESTABLISHED"]`
 
 - `net_io_fields`: amount of (sent, received) data
-    - `bytes` - bytes (sent, received) 
-    - `packets` - packets (sent, received)
-    - `errors` - errors while (sending, receiving)
+    - `bytes` - bytes (sent, received)
     - `drops` - drops while (sending, receiving)
-    - default: `["packets", "errors"]`
+    - default: `["bytes"]`
     
-- `net_io_pernic`: whether to display `net_io_fields` per each network interface card or not
-    - default: `true`
+- `net_pernic`: whether to display `net_io_fields` per each network interface card or not
+    - default: `false`
 
 - `mem_usage_fields`: system memory usage
-    - *ONCE* `total` - total physics memory (exlusive swap)
     - `used` - memory used
     - `buffers` - memory for things like FS metadata
     - `cached` - memory cached
@@ -54,16 +54,14 @@ Configure monitoring via `config.json` with the following fields:
     - default: `["used", "cached", "shared"]`
     
 - `swp_usage_fields`: system swap usage
-    - *ONCE* `total` - total swap memory
     - `used` - used swap 
     - default: `["used"]`
     
 - `dsk_usage_fields`: disk usage
-    - *ONCE* `total` - total disk memory
     - `used` - used disk memory
     - `read` - read speed
     - `write` - write speed
     - default: `["used", "read", "write"]`
 
-- `dsk_speed_perdisk`: whether to display read/write speed per each disk or not
-    - default: `true`
+- `dsk_perdisk`: whether to display read/write speed per each disk or not
+    - default: `false`
