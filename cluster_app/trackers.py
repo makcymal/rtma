@@ -1,15 +1,13 @@
-#!python
-
 import os
-from abc import abstractmethod, ABC
 import json
 import psutil as ps
+import logging
+from abc import abstractmethod, ABC
 from collections import namedtuple
 
 from utils import Subscriber
 from query import Query
 
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,9 @@
-#!python
-
-from threading import Lock
 import typing as tp
+import logging
+from threading import Lock
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 
-
-import logging
 
 logger = logging.getLogger(__name__)
 

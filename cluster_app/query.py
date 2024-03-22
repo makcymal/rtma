@@ -1,12 +1,9 @@
-#!python
-
 import os
 import json
+import logging
 from copy import deepcopy as cp
 from utils import Publisher, Singleton
 
-
-import logging
 
 logger = logging.getLogger(__name__)
 

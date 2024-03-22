@@ -1,16 +1,13 @@
-#!python
-
 import os
 import socket
 import time
 import json
+import logging
 
 from query import Query
 from trackers import CpuTracker, NetTracker, MemTracker, DskTracker
-from conn_broker import broker_connection
+import conn_broker
 
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +34,7 @@ def main():
     dsk_tracker = DskTracker()
     query.notify_subs()
     
-    conn = broker_connection()
+    broker_conn = conn_broker.broker_connection()
     
     specs_dict = {
         "host": host,
@@ -51,7 +48,7 @@ def main():
         json.dump(specs_dict, specs_json)
     specs = json.dumps(specs_dict).encode("utf-8")
     
-    conn.sendall(specs)
+    broker_conn.sendall(specs)
 
     while True:
         response_dict = {
@@ -67,7 +64,7 @@ def main():
             json.dump(response_dict, response_json, indent=4)
         response = json.dumps(response_dict).encode("utf-8")
 
-        conn.sendall(response)
+        broker_conn.sendall(response)
         
         time.sleep(1)
 
