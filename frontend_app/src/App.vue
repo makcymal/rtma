@@ -6,6 +6,7 @@
 import axios from 'axios'
 import {useUserDataStore} from "@/stores/UserDataStore"
 import { mapWritableState, mapStores, mapState } from "pinia";
+import router from './router';
 
 export default {
   name: 'App',
@@ -22,7 +23,10 @@ export default {
             } else{
               this.userAuthenticated = false
             }
-          })
+          }).catch(error => {
+              console.log(error.response.data.detail)
+              router.push("login")
+            })
   }
 }
 </script>

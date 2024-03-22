@@ -52,8 +52,9 @@ export default {
             if(response.data.status === "ERROR"){
                 this.errorInfo = response.data.details
             } else{
-                console.log(response.data);
-                this.$router.push("/"); // TODO: поменять на профиль человека
+                this.$router.push("/").then(() => {
+                  window.location.reload()
+                }); // TODO: поменять на профиль человека
             }
           })
 

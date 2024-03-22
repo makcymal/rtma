@@ -1,18 +1,18 @@
 import datetime
-from typing import Optional
+from typing import Optional, Union
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Cookie
-from fastapi import status, HTTPException
-from fastapi.responses import RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Cookie, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from jwt import DecodeError, InvalidTokenError
 from python_freeipa import ClientMeta
 from python_freeipa.exceptions import InvalidSessionPassword
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer
-from starlette.responses import JSONResponse, Response
+from fastapi.security import HTTPBearer
+from starlette import status
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
-from agg_backend_app import config
-from auth_utils import encode_jwt, generate_cookie_session_id, decode_jwt
+from backend_app import config
+from backend_app.utils.auth_utils import encode_jwt, decode_jwt
 
 from models import User
 
@@ -102,7 +102,7 @@ async def login(user: User):
     }
 
     response = JSONResponse(content=content)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, samesite='none', path="/",
+    response.set_cookie(key="access_token", value=f"{access_token}", httponly=True, secure=True, samesite='none', path="/",
                         expires=expires.strftime("%a, %d %b %Y %H:%M:%S GMT"))
     return response
 
@@ -117,29 +117,36 @@ async def logout():
 
     response = JSONResponse(content=content)
 
-    expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=5)
+    # expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=5)
 
-    response.set_cookie(
+    response.delete_cookie(
         key="access_token",
-        value="",
         secure=True,
         httponly=True,
         samesite='none',
-        expires=expires.strftime("%a, %d %b %Y %H:%M:%S GMT"),
         path="/"
     )
     return response
 
 
+def get_data_from_jwt_cookie(request: Request):
+    token = request.cookies.get("access_token")
+    try:
+        public_user_data = decode_jwt(token)
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authorized or invalid token"
+        )
+    del public_user_data['sub']
+    return public_user_data
+
+
 @app.get('/check-cookie-login')
-async def check_cookie_login(token: Optional[str] = Cookie(alias="access_token")):
-    print(token)
-    token = token.split()[1]
-    public_data = decode_jwt(token)
-    del public_data['sub']
+async def check_cookie_login(user_data: dict = Depends(get_data_from_jwt_cookie)):
     return {
         "status": "OK",
-        "data": public_data,
+        "data": user_data,
         "details": "user authorized"
     }
 

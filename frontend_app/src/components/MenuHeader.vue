@@ -42,7 +42,9 @@ export default {
       .then((response) => {
             if(response.data.status === "OK"){
               this.userAuthenticated = false
-              this.$router.push("/");
+              this.$router.push("/").then(() => {
+                window.location.reload()
+              });
             }
           })
     },

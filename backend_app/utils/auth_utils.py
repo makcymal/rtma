@@ -3,7 +3,7 @@ import uuid
 import jwt
 from datetime import datetime, timedelta
 
-from config import settings
+from backend_app.config import settings
 
 
 def generate_cookie_session_id():
@@ -17,7 +17,7 @@ def encode_jwt(payload: dict, private_key: str = settings.auth_jwt.private_key_p
     iat = datetime.utcnow()    # время создания токена
     expire = iat + timedelta(minutes=expire_minutes)  # время истечения токена
     to_encode.update(iat=iat, exp=expire)
-    encoded_jwt = jwt.encode(payload=payload, key=private_key, algorithm=algorithm)
+    encoded_jwt = jwt.encode(payload=to_encode, key=private_key, algorithm=algorithm)
     return encoded_jwt
 
 
