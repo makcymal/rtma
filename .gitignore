@@ -326,7 +326,9 @@ package-lock.json
 
     
 /report
+/test
 *.md
 !README.md
+!TODO.md
 
 # End of https://www.toptal.com/developers/gitignore/api/python,vuejs,redis,visualstudiocode,pycharm

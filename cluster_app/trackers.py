@@ -94,16 +94,12 @@ class CpuTracker(Tracker):
         cpu_times = ps.cpu_times_percent(percpu=False)
         cpu_times_fields = self.fields.intersection(cpu_times._fields)
         response = {field: getattr(cpu_times, field) for field in cpu_times_fields}
-        logger.debug(
-            "Filled cpu_tracker.response with cpu_times_percent for the entire cpu"
-        )
 
         if "freq" in self.fields:
             cpu_freq = ps.cpu_freq(percpu=False)
             response["freq"] = round(
                 cpu_freq.current * 1000 if cpu_freq.current < 10 else cpu_freq.current
             )
-            logger.debug("Filled cpu_tracker.response with cpu_freq for the entire cpu")
 
         return response
 
