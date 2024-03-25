@@ -1,2 +1,0 @@
-- make query updatable
-- groups e.g. "gvr:knl"

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class Query(Publisher, metaclass=Singleton):
 
     __slots__ = (
-        "_que",
+        "_qry",
         "_default_que",
         "_subs",
         "quefile",
@@ -26,7 +26,7 @@ class Query(Publisher, metaclass=Singleton):
         self.quefile = os.path.join(os.path.dirname(__file__), "query.json")
 
         if os.environ.get("RTMA_SENSOR") is not None:
-            self.logfile = "/var/log/rtma-sensor/sensor.log"
+            self.logfile = "/var/log/rtma/rtma-sensor.log"
             self.debug = False
             self.loglevel = logging.INFO
         else:
@@ -36,19 +36,19 @@ class Query(Publisher, metaclass=Singleton):
 
         with open(self.quefile, "r") as quefile:
             self._default_que = json.load(quefile)
-            self._que = cp(self._default_que)
+            self._qry = cp(self._default_que)
 
         logger.info(f"Query initialized with debug = {self.debug}")
 
-    def update(self, que_str: str):
-        self._que = json.loads(que_str)
+    def update(self, qry_str: str):
+        self._qry = json.loads(qry_str)
         logger.info("Updating query: ok")
         self.notify_subs()
 
     def __getitem__(self, key: str):
         try:
-            return self._que[key]
+            return self._qry[key]
         except Exception as err:
             logger.error(f"Invalid order: unknown {str(err)} key")
             logger.warning("Default order will be used")
-            self._que = cp(self._default_que)
+            self._qry = cp(self._default_que)
