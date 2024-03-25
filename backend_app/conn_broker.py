@@ -1,12 +1,25 @@
-#!python
-
-import socket
+import time
 
 
-HOST_BROKER = "localhost"
-PORT_BROKER_LOC = 42402
-PORT_BROKER_REM = 42401
+INTERVAL = 1
 
 
-conn_backend = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-conn_backend.connect((HOST_BROKER, PORT_BROKER_REM))
+class QueryManager:
+    def __init__(self):
+        self._responses = {}
+
+    async def _call_broker(self, query: str): ...
+
+    async def __getitem__(self, query: str) -> bytes:
+        if query in self._responses:
+            resp = self._responses[query]
+            if time.time() > resp["expires"]:
+                resp["data"] = await self._call_broker(query)
+                resp["expires"] = time.time() + INTERVAL
+        else:
+            data = await self._call_broker(query)
+            self._responses[query] = {
+                "data": data,
+                "expires": time.time() + INTERVAL,
+            }
+        return self._responses[query]

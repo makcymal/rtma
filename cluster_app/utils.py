@@ -2,7 +2,6 @@ import typing as tp
 import logging
 from threading import Lock
 from abc import abstractmethod, ABC
-from dataclasses import dataclass
 
 
 logger = logging.getLogger(__name__)
@@ -54,22 +53,3 @@ class Singleton(type):
                 logger.debug(f"Singleton {cls} accessed for the first time")
 
         return cls._instance
-
-
-@dataclass(slots=True)
-class Pair:
-    
-    a: float
-    b: float
-    
-    def __sub__(self, other):
-        self.a -= other.a
-        self.b -= other.b
-    
-    def __div__(self, div):
-        self.a /= div
-        self.b /= div
-        
-    def __iter__(self):
-        yield self.a
-        yield self.b

@@ -25,7 +25,7 @@ class Query(Publisher, metaclass=Singleton):
 
         self.quefile = os.path.join(os.path.dirname(__file__), "query.json")
 
-        if int(os.getenv("RTMA_SENSOR", "0")) == 1:
+        if os.environ.get("RTMA_SENSOR") is not None:
             self.logfile = "/var/log/rtma-sensor/sensor.log"
             self.debug = False
             self.loglevel = logging.INFO

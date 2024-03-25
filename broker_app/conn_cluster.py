@@ -1,9 +1,11 @@
+import os
 import socket
 import logging
 
 
 logger = logging.getLogger(__name__)
 
+HOST = socket.gethostname() if os.environ.get("RTMA_BROKER") is not None else ""
 PORT_CLUSTER_LOC = 42400
 PORT_CLUSTER_REM = 42400
 
@@ -18,8 +20,8 @@ logger.info(
 
 
 def cluster_listener() -> socket.socket:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("", PORT_CLUSTER_LOC))
-    sock.listen(MAXCONN)
+    serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serv.bind((HOST, PORT_CLUSTER_LOC))
+    serv.listen(MAXCONN)
     logger.info(f"Listening to cluster, port: {PORT_CLUSTER_LOC}")
-    return sock
+    return serv
