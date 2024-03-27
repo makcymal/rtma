@@ -133,21 +133,20 @@ async def check_cookie_login(user_data: dict = Depends(get_data_from_jwt_cookie)
     return {"status": "OK", "data": user_data, "details": "user authorized"}
 
 
-query_manager = conn_broker.QueryManager()
+conn_manager = conn_broker.ConnManager()
 
 
 # in case @app.websocket fails for some reason use
 # @app.websocket_route("/ws")
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    logger.debug(f"{websocket.client} connected")
+async def websocket_endpoint(ws: WebSocket):
+    await conn_manager.register(ws)
+    logger.debug(f"{ws.client} connected")
     try:
         while True:
-            query = await websocket.receive_text()
-            logger.debug(f"{websocket.client} queried: {query}")
-            response = await query_manager[query]
-            logger.debug(f"sending response to {websocket.client}: {response}")
-            await websocket.send(response)
+            query = await ws.receive_text()
+            logger.debug(f"{ws.client} queried: {query}")
+            await conn_manager.update(ws, query)
     except WebSocketDisconnect:
-        logger.debug(f"{websocket.client} disconnected")
+        await conn_manager.unregister(ws)
+        logger.debug(f"{ws.client} disconnected")

@@ -1,4 +1,5 @@
 import socket
+import selectors
 import logging
 
 import conn_cluster
@@ -9,8 +10,8 @@ logger = logging.getLogger(__name__)
     
     
 def main():
-    cluster_listener = conn_cluster.cluster_listener()
+    serv_cluster = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serv_backend = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    selector = selectors.DefaultSelector()
     
-    while True:
-        conn, addr = cluster_listener.accept()
-        
+    d = {selector: 1}
