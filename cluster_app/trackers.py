@@ -11,23 +11,36 @@ from query import Query
 
 logger = logging.getLogger(__name__)
 
-BYTES_DENOM = 1024
-
 
 class Tracker(Subscriber, ABC):
 
-    __slots__ = ("debug", "specs", "interval", "extended", "fields", "prev")
+    __slots__ = (
+        "debug",
+        "interval",
+        "bytes_denom",
+        "specs",
+        "fields",
+        "extended",
+        "prev",
+    )
 
     def __init__(self):
         Query().subscribe(self)
+        self.get_update()
         self.specs = {}
         self._fill_specs()
         logger.info(f"Got {str(self)} specs")
 
     def get_update(self):
         query = Query()
-        self.debug = query.debug
         self.interval = query["interval"]
+        if m := query["measure"] == "kb":
+            self.bytes_denom = 1024
+        elif m == "mb":
+            self.bytes_denom = 1024 * 1024
+        else:
+            self.bytes_denom = 1
+        self.debug = query.debug
         self.extended = query[f"{str(self)}_extended"]
         self.fields = set(query[f"{str(self)}_fields"])
         self._validate_query_fields()
@@ -209,16 +222,16 @@ class MemTracker(Tracker):
         return "mem"
 
     def _fill_specs(self):
-        self.specs["mem_total"] = round(ps.virtual_memory().total / BYTES_DENOM)
-        self.specs["swp_total"] = round(ps.swap_memory().total / BYTES_DENOM)
+        self.specs["mem_total"] = round(ps.virtual_memory().total / self.bytes_denom)
+        self.specs["swp_total"] = round(ps.swap_memory().total / self.bytes_denom)
 
     def track(self) -> dict:
         response = {
-            field: round(getattr(ps.virtual_memory(), field) / BYTES_DENOM)
+            field: round(getattr(ps.virtual_memory(), field) / self.bytes_denom)
             for field in self.fields
         }
         if self.extended:
-            response["swp_used"] = round(ps.swap_memory().used / BYTES_DENOM)
+            response["swp_used"] = round(ps.swap_memory().used / self.bytes_denom)
 
         self._debug_tracking(response)
         return response
@@ -237,7 +250,7 @@ class DskTracker(Tracker):
             {
                 "name": os.path.basename(part.device),
                 "mountpoint": part.mountpoint,
-                "total": round(ps.disk_usage(part.mountpoint).total / BYTES_DENOM),
+                "total": round(ps.disk_usage(part.mountpoint).total / self.bytes_denom),
             }
             for part in partitions
         ]
@@ -247,7 +260,7 @@ class DskTracker(Tracker):
         if "used" in self.fields:
             response["used"] = round(
                 sum(ps.disk_usage(spec["mountpoint"]).used for spec in self.specs)
-                / BYTES_DENOM
+                / self.bytes_denom
             )
 
         disk_io = ps.disk_io_counters(perdisk=False)
@@ -255,14 +268,14 @@ class DskTracker(Tracker):
             if self.prev:
                 response["read"] = round(
                     (disk_io.read_bytes - self.prev.read_bytes)
-                    / BYTES_DENOM
+                    / self.bytes_denom
                     / self.interval
                 )
         if "write" in self.fields:
             if self.prev:
                 response["write"] = round(
                     (disk_io.write_bytes - self.prev.write_bytes)
-                    / BYTES_DENOM
+                    / self.bytes_denom
                     / self.interval
                 )
 
@@ -278,7 +291,9 @@ class DskTracker(Tracker):
         if "used" in self.fields:
             for name, spec in zip(names, self.specs):
                 response[name].update(
-                    used=round(ps.disk_usage(spec["mountpoint"]).used / BYTES_DENOM)
+                    used=round(
+                        ps.disk_usage(spec["mountpoint"]).used / self.bytes_denom
+                    )
                 )
 
         disk_io = ps.disk_io_counters(perdisk=True)
@@ -288,7 +303,7 @@ class DskTracker(Tracker):
                     response[name].update(
                         read=round(
                             (disk_io[name].read_bytes - self.prev[name].read_bytes)
-                            / BYTES_DENOM
+                            / self.bytes_denom
                             / self.interval
                         )
                     )
@@ -298,7 +313,7 @@ class DskTracker(Tracker):
                     response[name].update(
                         write=round(
                             (disk_io[name].write_bytes - self.prev[name].write_bytes)
-                            / BYTES_DENOM
+                            / self.bytes_denom
                             / self.interval
                         )
                     )
@@ -313,3 +328,7 @@ class DskTracker(Tracker):
 
         self._debug_tracking(response)
         return response
+
+
+def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
+    return (MemTracker(),)

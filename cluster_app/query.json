@@ -1,5 +1,7 @@
 {
-    "interval": 1,
+    "interval": 2,
+    
+    "measure": "kb",
     
     "cpu_fields": ["system", "user", "nice", "idle", "iowait", "freq"],
     "cpu_extended": false,
