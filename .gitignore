@@ -330,5 +330,6 @@ package-lock.json
 *.md
 !README.md
 !TODO.md
+/broker_app
 
 # End of https://www.toptal.com/developers/gitignore/api/python,vuejs,redis,visualstudiocode,pycharm
