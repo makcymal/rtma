@@ -4,7 +4,7 @@ import uvicorn
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename="/var/log/rtma/rtma-backend.log",
+        filename="rtma-backend.log",
         level=logging.DEBUG,
         format="%(levelname)s:%(asctime)s - %(module)s:%(lineno)s - %(message)s",
         datefmt="%H:%M:%S",

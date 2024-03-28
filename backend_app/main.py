@@ -22,6 +22,7 @@ from starlette.responses import JSONResponse
 import redis.asyncio as aioredis
 
 from backend_app import config
+from backend_app.stream import *
 from backend_app.utils.auth_utils import encode_jwt, decode_jwt
 
 from models import User
@@ -147,56 +148,13 @@ async def websocket_echo(ws: WebSocket):
         pass
 
 
-class ConnManager:
-    def __init__(self) -> None:
-        pass
-    
-    
-class QueryManager:
-    def __init__(self) -> None:
-        pass
-    
-    
-class ResponsesRepo:
-    def __init__(self) -> None:
-        pass
-
-
-# Globals
-REDIS_HOST = "127.0.0.1"
-REDIS_PORT = 42401
-redis_client = None
-conn_mgr = ConnManager()
-query_mgr = QueryManager()
-responses = ResponsesRepo()
-
-
 # in case @app.websocket fails for some reason use
 # @app.websocket_route("/ws")
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
-    await conn_mgr.connect(ws)
     try:
         while True:
-            query = ws.receive_text()
-            query_mgr.register(ws, query)
-    except WebSocketException:
+            query = await ws.receive_text()
+            await query_mgr.register(ws, query)
+    except WebSocketDisconnect:
         query_mgr.unregister(ws)
-        await conn_mgr.disconnect(ws)
-
-
-@app.on_event("startup")
-async def redis_startup():
-    global redis_client
-    redis_client = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-    threading.Thread(target=redis_listen, daemon=True).start()
-
-
-def redis_listen():
-    pubsub = redis_client.pubsub()
-    pubsub.subscribe("channel_signal")
-    
-    for msg in pubsub.listen():
-        if msg["type"] == "message":
-            data = json.loads(msg["data"])
-            
