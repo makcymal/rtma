@@ -15,6 +15,7 @@ reader: aio.StreamReader
 writer: aio.StreamWriter
 rw_lock = aio.Lock()
 query_lock = aio.Lock()
+run_lock = aio.Lock()
 specs: str
 
 
@@ -69,28 +70,34 @@ async def send_responses():
     query = Query()
     # initializing trackers
     trackers = all_trackers()
+    
+    id = f"{config.BATCH}!{config.LABEL}!"
 
     # getting specifications and sending them to backend
     specs = json.dumps(
         {
-            "id": f"{config.BATCH}!{config.LABEL}!spc!{round(time.time())}!{query["measure"]}",
+            "header": id + f"spc!{round(time.time())}!{query["measure"]}",
             **{str(tracker): tracker.specs for tracker in trackers},
         }
     )
     await sendall(specs)
 
+    prev_resp_hash = 0
     while True:
-        async with query_lock:
-            response = json.dumps(
-                {
-                    "id": f"{config.BATCH}!{config.LABEL}!{query["mark"]}!{round(time.time())}!{query["measure"]}",
-                    **{str(tracker): tracker.track() for tracker in trackers},
-                }
-            )
-            try:
-                await sendall(response)
-            except ConnectionResetError:
-                await reconnect()
+        async with run_lock:
+            async with query_lock:
+                response = json.dumps(
+                    {
+                        "header": id + f"{query["mark"]}!{round(time.time())}!{query["measure"]}",
+                        **{str(tracker): tracker.track() for tracker in trackers},
+                    }
+                )
+                try:
+                    if (curr_resp_hash := hash(response)) != prev_resp_hash:
+                        await sendall(response)
+                    prev_resp_hash = curr_resp_hash
+                except ConnectionResetError:
+                    await reconnect()
         await aio.sleep(Query()["interval"])
 
 
@@ -99,9 +106,14 @@ async def recv_queries():
         logger.debug("Enter reading query loop")
         if (qry_str := await recvall()) == config.BACKEND_DISCONNECT_CODE:
             await reconnect()
-        logger.debug(f"New query: {qry_str}")
-        async with query_lock:
-            Query().update(qry_str)
+        if qry_str == "stop":
+            await run_lock.acquire()
+        else:
+            if run_lock.locked():
+                run_lock.release()
+            logger.debug(f"New query: {qry_str}")
+            async with query_lock:
+                Query().update(qry_str)
 
 
 async def main():

@@ -71,33 +71,29 @@ ws_router = APIRouter()
 async def handle_client(ws: WebSocket):
     # websocket connecting
     await m_clients.connect(ws)
-    aio.create_task(client_recv_queries(ws))
-    # aio.create_task(client_send_responses(ws))
+    
+    while True:
+        try:
+            query = await ws.receive_text()
+            # trigger sending query to appropriate sensor
+        except WebSocketDisconnect:
+            m_clients.disconnect(ws)
 
 
-async def get_cluster_server() -> aio.Server:
+async def get_sensor_server() -> aio.Server:
     return await aio.start_server(handle_sensor, port=SENSORS_PORT, reuse_port=True)
 
 
 async def handle_sensor(reader: aio.StreamReader, writer: aio.StreamWriter):
     addr = writer.get_extra_info("addr")
     await sensor_recv_specs(reader, addr)
-    print(f"Sensor {addr}: {m_sensors.addr2id[addr]} connected to cluster_server")
+    print(f"Sensor {addr}: {m_sensors.addr2id[addr]} connected")
 
-    aio.create_task(sensor_recv_responses(reader))
-    # aio.create_task(sensor_send_queries(writer))
-
-
-async def client_recv_queries(ws: WebSocket):
     while True:
-        try:
-            query = await ws.receive_text()
-        except WebSocketDisconnect:
-            m_clients.disconnect(ws)
-            
-
-async def client_send_responses(ws: WebSocket):
-    ...    
+        if (response := await recvall(reader)) == PEER_DISCONNECTED:
+            break
+        # trigger sending response to client
+        m_responses.insert(json.loads(response))
 
 
 async def sensor_recv_specs(reader: aio.StreamReader, addr):
@@ -105,16 +101,9 @@ async def sensor_recv_specs(reader: aio.StreamReader, addr):
     specs = json.dumps(await recvall(reader))
     m_sensors.insert(addr, specs)
     # add batch to responses so it's possible to insert to dict without checks
-    batch = specs["id"].split("!")[0]
+    batch = specs["header"].split("!")[0]
     if batch not in m_responses.repo:
         m_responses.repo[batch] = {}
-
-
-async def sensor_recv_responses(reader: aio.StreamReader):
-    while True:
-        if (response := await recvall(reader)) == PEER_DISCONNECTED:
-            break
-        m_responses.insert(json.loads(response))
 
 
 async def sensor_send_queries(writer: aio.StreamWriter):
