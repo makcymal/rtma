@@ -9,44 +9,78 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 logger = logging.getLogger(__name__)
 
 
-class ClientsMgr:
+class ClientMgr:
     def __init__(self):
         self.ls = {}
-    
+
     async def connect(self, ws: WebSocket):
         await ws.accept()
         self.ls[ws] = ""
-        
+
     def update(self, ws: WebSocket, query: str):
         self.ls[ws] = query
-        
+
     def disconnect(self, ws: WebSocket):
         del self.ls[ws]
-        
 
-class SensorsMgr:
+
+class SensorMgr:
     def __init__(self):
         self.ls = {}
         self.addr2id = {}
         self.id2addr = {}
         self.specs = {}
+        self.batches = 
 
     def insert(self, addr, specs: dict):
-        id = specs.pop("id")
+        header = specs.pop("header")
         self.addr2id[addr] = id
         self.id2addr[id] = addr
         self.specs[addr] = specs
 
 
-class QueriesMgr:
+class QueryMgr:
     def __init__(self):
         with open("query.standard.json", "r") as std_file:
-            self.std = json.load(std_file)
+            self.std = json.loads(std_file)
         with open("query.extended.json", "r") as ext_file:
-            self.ext = json.load(ext_file)
+            self.ext = json.loads(ext_file)
+
+        # all queries existing right now
+        self.query_set = set()
+        # map websocket -> query
+        # needed to delete unused queries, nevermore
+        self.query_map = {}
+        # map query -> #{how much such a queries exist}
+        self.query_cnt = {}
+
+    def insert(self, ws: WebSocket, query: str):
+        self.remove(ws)
+        # стандартный майкрософтовский энвелоуп
+        self.query_map[ws] = query
+        self.query_set.add(query)
+
+        if query not in self.query_cnt:
+            self.query_cnt[query] = 1
+            aio.create_task(extend_sensor(query))
+        else:
+            self.query_cnt[query] += 1
+
+    def remove(self, ws: WebSocket):
+        if ws not in self.query_map:
+            return
+
+        old_query = self.query_map[ws]
+        self.query_cnt[old_query] -= 1
+        if self.query_cnt[old_query] == 0:
+            self.query_set.remove(old_query)
+            aio.create_task(reduce_sensor())
+            
+    async def extend_sensor(self, query):
+        
 
 
-class ResponsesMgr:
+class ResponseMgr:
     def __init__(self):
         self.repo = {}
 
@@ -58,10 +92,10 @@ class ResponsesMgr:
 
 PEER_DISCONNECTED = f"{secrets.randbits(32)}"
 SENSORS_PORT = 42400
-m_clients = ClientsMgr()
-m_sensors = SensorsMgr()
-m_queries = QueriesMgr()
-m_responses = ResponsesMgr()
+m_clients = ClientMgr()
+m_sensors = SensorMgr()
+m_queries = QueryMgr()
+m_responses = ResponseMgr()
 ws_router = APIRouter()
 
 
@@ -69,15 +103,42 @@ ws_router = APIRouter()
 # @app.websocket_route("/ws")
 @ws_router.websocket("/ws")
 async def handle_client(ws: WebSocket):
+    '''
+    Client can send one of the followings messages:
+    "lsob" - get LiSt Of Batches
+    "head?BATCH" - get table HEADer for BATCH
+    "mstd?BATCH" - STanDard Monitoring subscribe to BATCH
+    "spec?BATCH?LABEL" - get SPECifications of machine with LABEL in BATCH
+    "mext?BATCH?LABEL" - EXTended Monitoring to machine with LABEL in BATCH
+    "stop" - stop subscription
+    '''
+    
     # websocket connecting
     await m_clients.connect(ws)
-    
+
     while True:
         try:
-            query = await ws.receive_text()
+            msg = await ws.receive_text()
+            if msg[0] == "?":
+                m_queries.insert(ws, msg[1:])
+            elif msg[0] == "!":
+                m_queries.insert(ws, msg.split("!")[1:])
+            elif msg.startswith("lsob"):
+                await send_batches_to_client(ws)
+            elif msg.startswith("head"):
+                await send_table_header_to_client(ws, msg.split('?')[1])
+            elif msg.startswith("spec"):
+                await send_specs_to_client(ws, msg.split("!")[1:])
+            elif msg.startswith("stop"):
+                m_queries.remove(ws)
+
             # trigger sending query to appropriate sensor
         except WebSocketDisconnect:
-            m_clients.disconnect(ws)
+            m_clients.disconnect(ws) 
+            
+
+async def send_batches_to_client(ws: WebSocket):
+       
 
 
 async def get_sensor_server() -> aio.Server:
@@ -108,56 +169,6 @@ async def sensor_recv_specs(reader: aio.StreamReader, addr):
 
 async def sensor_send_queries(writer: aio.StreamWriter):
     pass
-
-
-class QueryManager:
-
-    __slots__ = ("queries", "sockets", "_query_map", "_query_counter")
-
-    def __init__(self):
-        self.queries = set()
-        self.sockets = set()
-        self._query_map = {}
-        self._query_counter = {}
-        logger.debug(f"Created empty {self.__class__.__name__}")
-
-    def _add_query(self, ws: WebSocket, query: str):
-        # стандартный майкрософтовский энвелоуп
-        self._query_map[ws] = query
-        self.queries.add(query)
-        if query not in self._query_counter:
-            self._query_counter[query] = 0
-            logger.debug(f"Query {query} added")
-        self._query_counter[query] += 1
-        logger.debug(f"Query {query} counter increased: {self._query_counter[query]}")
-
-    def _remove_query(self, ws: WebSocket):
-        if ws not in self._query_map:
-            return
-
-        old_query = self._query_map[ws]
-        self._query_counter[old_query] -= 1
-        logger.debug(f"Query {old_query} decreased: {self._query_counter[old_query]}")
-        if self._query_counter[old_query] == 0:
-            self.queries.remove(old_query)
-            logger.debug(f"Query {old_query} removed")
-
-    async def register(self, ws: WebSocket, query: str):
-        if ws not in self.sockets:
-            await ws.accept()
-            self.sockets.add(ws)
-
-        # индиана джонс
-        self._remove_query(ws)
-        self._add_query(ws, query)
-
-        dump = json.dumps(list(self.queries))
-        await broker_conn.sendall(dump)
-
-    def unregister(self, ws: WebSocket):
-        self.sockets.remove(ws)
-        self._remove_query(ws)
-        del self._query_map[ws]
 
 
 async def recvall(reader: aio.StreamReader) -> str:
