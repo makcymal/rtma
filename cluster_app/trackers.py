@@ -216,7 +216,7 @@ class NetTracker(Tracker):
 # отслеживание мемов в паблике караси БЕСПЛАТНО
 class MemTracker(Tracker):
 
-    VALID_FIELDS = set(("used", "buffers", "cached", "shared"))
+    VALID_FIELDS = set(("percent", "used", "buffers", "cached", "shared"))
 
     def __str__(self):
         return "mem"
@@ -231,7 +231,10 @@ class MemTracker(Tracker):
             for field in self.fields
         }
         if self.extended:
-            response["swp_used"] = round(ps.swap_memory().used / self.bytes_denom)
+            field = "percent" if "percent" in self.fields else "used"
+            response[f"swp_{field}"] = round(
+                getattr(ps.swap_memory(), field) / self.bytes_denom
+            )
 
         self._debug_tracking(response)
         return response
@@ -331,4 +334,4 @@ class DskTracker(Tracker):
 
 
 def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
-    return (MemTracker(),)
+    return (CpuTracker(), NetTracker(), MemTracker(), DskTracker())

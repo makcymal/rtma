@@ -1,5 +1,7 @@
 {
-    "interval": 2,
+    "mark": "ext",
+    
+    "interval": 1,
     
     "measure": "kb",
     

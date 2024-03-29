@@ -1,0 +1,19 @@
+{
+    "mark": "std",
+    
+    "interval": 2,
+    
+    "measure": "kb",
+    
+    "cpu_fields": ["system", "user", "iowait", "idle", "freq"],
+    "cpu_extended": false,
+    
+    "net_fields": ["bytes"],
+    "net_extended": false,
+    
+    "mem_fields": ["percent"],
+    "mem_extended": true,
+    
+    "dsk_fields": ["read", "write"],
+    "dsk_extended": false
+}

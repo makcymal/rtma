@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from jwt import InvalidTokenError
 from python_freeipa import ClientMeta
 from python_freeipa.exceptions import InvalidSessionPassword
@@ -12,11 +12,13 @@ from starlette.responses import JSONResponse
 from models import User
 from config import settings
 from auth import encode_jwt, decode_jwt
+from streaming import ws_router
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+router.include_router(ws_router)
 
 
 @router.get("/")
@@ -94,24 +96,12 @@ async def check_cookie_login(user_data: dict = Depends(get_data_from_jwt_cookie)
     return {"status": "OK", "data": user_data, "details": "user authorized"}
 
 
-@router.websocket("/echo/{otp}")
-async def websocket_echo(ws: WebSocket):
-    await ws.accept()
-    try:
-        while True:
-            msg = await ws.receive_text()
-            ws.send_text(msg.upper())
-    except:
-        pass
-
-
-# in case @app.websocket fails for some reason use
-# @app.websocket_route("/ws")
-@router.websocket("/ws")
-async def websocket_endpoint(ws: WebSocket):
-    try:
-        while True:
-            query = await ws.receive_text()
-            await query_mgr.register(ws, query)
-    except WebSocketDisconnect:
-        query_mgr.unregister(ws)
+# @router.websocket("/echo/{otp}")
+# async def websocket_echo(ws: WebSocket):
+#     await ws.accept()
+#     try:
+#         while True:
+#             msg = await ws.receive_text()
+#             ws.send_text(msg.upper())
+#     except:
+#         pass

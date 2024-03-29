@@ -13,13 +13,14 @@ logger = logging.getLogger(__name__)
 
 reader: aio.StreamReader
 writer: aio.StreamWriter
-lock = aio.Lock()
+rw_lock = aio.Lock()
+query_lock = aio.Lock()
 specs: str
 
 
 async def reconnect():
     global reader, writer
-    async with lock:
+    async with rw_lock:
         if writer.is_closing():
             logger.warning("Connection to backend was suddenly closed")
             if config.ALWAYS_RECONNECT:
@@ -63,42 +64,44 @@ async def sendall(data: str):
     await writer.drain()
 
 
-async def writing_responses():
+async def send_responses():
     global specs
+    query = Query()
     # initializing trackers
     trackers = all_trackers()
 
     # getting specifications and sending them to backend
     specs = json.dumps(
         {
-            "group": config.GROUP,
-            "name": config.NAME,
+            "id": f"{config.BATCH}!{config.LABEL}!spc!{round(time.time())}!{query["measure"]}",
             **{str(tracker): tracker.specs for tracker in trackers},
         }
     )
     await sendall(specs)
 
     while True:
-        response = json.dumps(
-            {
-                "group": config.GROUP,
-                "name": config.NAME,
-                "time": round(time.time()),
-                **{str(tracker): tracker.track() for tracker in trackers},
-            }
-        )
-        try:
-            await sendall(response)
-        except ConnectionResetError:
-            await reconnect()
+        async with query_lock:
+            response = json.dumps(
+                {
+                    "id": f"{config.BATCH}!{config.LABEL}!{query["mark"]}!{round(time.time())}!{query["measure"]}",
+                    **{str(tracker): tracker.track() for tracker in trackers},
+                }
+            )
+            try:
+                await sendall(response)
+            except ConnectionResetError:
+                await reconnect()
         await aio.sleep(Query()["interval"])
 
 
-async def reading_queries():
+async def recv_queries():
     while True:
-        if qry_str := await recvall() == config.BACKEND_DISCONNECT_CODE:
+        logger.debug("Enter reading query loop")
+        if (qry_str := await recvall()) == config.BACKEND_DISCONNECT_CODE:
             await reconnect()
-        Query().update(qry_str)
+        logger.debug(f"New query: {qry_str}")
+        async with query_lock:
+            Query().update(qry_str)
 
 
 async def main():
@@ -119,8 +122,9 @@ async def main():
         datefmt="%H:%M:%S",
     )
 
-    await aio.create_task(writing_responses())
-    await aio.create_task(reading_queries())
+    sending_responses = aio.create_task(send_responses())
+    aio.create_task(recv_queries())
+    await sending_responses
 
 
 if __name__ == "__main__":
