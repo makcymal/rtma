@@ -216,7 +216,7 @@ class NetTracker(Tracker):
 # отслеживание мемов в паблике караси БЕСПЛАТНО
 class MemTracker(Tracker):
 
-    VALID_FIELDS = set(("percent", "used", "buffers", "cached", "shared"))
+    VALID_FIELDS = set(("used", "buffers", "cached", "shared", "swap"))
 
     def __str__(self):
         return "mem"
@@ -225,16 +225,31 @@ class MemTracker(Tracker):
         self.specs["mem_total"] = round(ps.virtual_memory().total / self.bytes_denom)
         self.specs["swp_total"] = round(ps.swap_memory().total / self.bytes_denom)
 
+    def _getattr(self, field: str, mem: namedtuple, swp: namedtuple) -> float:
+        if field == "swap":
+            if self.extended:
+                print("MemTracker.extended = True")
+                return swp.used
+            else:
+                print("MemTracker.extended = False")
+                return swp.percent
+            return swp.used if self.extended else swp.percent
+        elif field == "used":
+            return mem.used if self.extended else mem.percent
+        else:
+            return (
+                round(getattr(mem, field) / self.bytes_denom)
+                if self.extended
+                else round(getattr(mem, field) * 100 / mem.total, 1)
+            )
+
     def track(self) -> dict:
+        mem = ps.virtual_memory()
+        swp = ps.swap_memory()            
         response = {
-            field: round(getattr(ps.virtual_memory(), field) / self.bytes_denom)
+            field: self._getattr(field, mem, swp)
             for field in self.fields
         }
-        if self.extended:
-            field = "percent" if "percent" in self.fields else "used"
-            response[f"swp_{field}"] = round(
-                getattr(ps.swap_memory(), field) / self.bytes_denom
-            )
 
         self._debug_tracking(response)
         return response
@@ -335,3 +350,10 @@ class DskTracker(Tracker):
 
 def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
     return (CpuTracker(), NetTracker(), MemTracker(), DskTracker())
+
+
+query = Query()
+mem = MemTracker()
+mem.extended = True
+mem.fields = ["used", "buffers", "cached", "shared", "swap"]
+m = mem.track()

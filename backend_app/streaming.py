@@ -3,6 +3,7 @@ import logging
 import secrets
 import asyncio as aio
 import struct
+import weakref
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 
@@ -27,16 +28,25 @@ class ClientMgr:
 class SensorMgr:
     def __init__(self):
         self.ls = {}
-        self.addr2id = {}
-        self.id2addr = {}
         self.specs = {}
-        self.batches = 
+        self.batches: list[str] = []
 
     def insert(self, addr, specs: dict):
         header = specs.pop("header")
-        self.addr2id[addr] = id
-        self.id2addr[id] = addr
-        self.specs[addr] = specs
+        mark, batch, label = header.split("!")
+        id = f"{batch}!{label}"
+        self.specs[id] = specs
+
+        for i in range(len(self.batches)):
+            if batch == self.batches[i]:
+                break
+        else:
+            self.batches.append(batch)
+            for i in range(len(self.batches) - 2, -1, -1):
+                if self.batches[i] > self.batches[i + 1]:
+                    self.batches[i : i + 2] = self.batches[i : i + 2][::-1]
+                else:
+                    break
 
 
 class QueryMgr:
@@ -75,9 +85,9 @@ class QueryMgr:
         if self.query_cnt[old_query] == 0:
             self.query_set.remove(old_query)
             aio.create_task(reduce_sensor())
-            
+
     async def extend_sensor(self, query):
-        
+        pass
 
 
 class ResponseMgr:
@@ -103,7 +113,7 @@ ws_router = APIRouter()
 # @app.websocket_route("/ws")
 @ws_router.websocket("/ws")
 async def handle_client(ws: WebSocket):
-    '''
+    """
     Client can send one of the followings messages:
     "lsob" - get LiSt Of Batches
     "head?BATCH" - get table HEADer for BATCH
@@ -111,34 +121,51 @@ async def handle_client(ws: WebSocket):
     "spec?BATCH?LABEL" - get SPECifications of machine with LABEL in BATCH
     "mext?BATCH?LABEL" - EXTended Monitoring to machine with LABEL in BATCH
     "stop" - stop subscription
-    '''
-    
+    """
+
     # websocket connecting
     await m_clients.connect(ws)
+    curr_task = None
 
     while True:
         try:
             msg = await ws.receive_text()
-            if msg[0] == "?":
-                m_queries.insert(ws, msg[1:])
-            elif msg[0] == "!":
-                m_queries.insert(ws, msg.split("!")[1:])
-            elif msg.startswith("lsob"):
-                await send_batches_to_client(ws)
-            elif msg.startswith("head"):
-                await send_table_header_to_client(ws, msg.split('?')[1])
-            elif msg.startswith("spec"):
-                await send_specs_to_client(ws, msg.split("!")[1:])
-            elif msg.startswith("stop"):
-                m_queries.remove(ws)
+            if isinstance(curr_task, aio.Task):
+                curr_task.cancel()
+
+            match msg[:4]:
+                case "lsob":
+                    await handle_client_lsob(ws)
+                case "head":
+                    batch = msg.split("?")[1]
+                    await handle_client_head(ws, batch)
+                case "mstd":
+                    batch = msg.split("?")[1]
+                    curr_task = aio.create_task(handle_client_mstd(ws, batch))
+                case "spec":
+                    batch, label = msg.split("?")[1:3]
+                    await handle_client_spec(ws, batch, label)
+                case "mext":
+                    batch, label = msg.split("?")[1:3]
+                    curr_task = aio.create_task(handle_client_mext(ws, batch, label))
+                case "stop":
+                    pass
 
             # trigger sending query to appropriate sensor
         except WebSocketDisconnect:
-            m_clients.disconnect(ws) 
-            
+            m_clients.disconnect(ws)
 
-async def send_batches_to_client(ws: WebSocket):
-       
+
+async def handle_client_lsob(ws: WebSocket):
+    response = {"header": "lsob", "batches": m_sensors.batches}
+    await ws.send_json(response)
+
+
+async def handle_client_head(ws: WebSocket, batch: str):
+    response = {
+        "header": f"head!{batch}",
+        "fields": {"cpu": [""], "net": [], "mem": [], "dsk": []},
+    }
 
 
 async def get_sensor_server() -> aio.Server:

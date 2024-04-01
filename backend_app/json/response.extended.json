@@ -1,0 +1,140 @@
+{
+    "header": "gvr:knl!backbone!std!1711098779!kb",
+    "cpu": [
+        {
+            "guest": 0.0,
+            "idle": 77.2,
+            "softirq": 1.0,
+            "system": 5.0,
+            "guest_nice": 0.0,
+            "user": 14.9,
+            "irq": 1.0,
+            "iowait": 1.0,
+            "nice": 0.0,
+            "steal": 0.0,
+            "freq": 2420
+        },
+        {
+            "guest": 0.0,
+            "idle": 98.0,
+            "softirq": 0.0,
+            "system": 0.0,
+            "guest_nice": 0.0,
+            "user": 1.0,
+            "irq": 1.0,
+            "iowait": 0.0,
+            "nice": 0.0,
+            "steal": 0.0,
+            "freq": 1400
+        },
+        {
+            "guest": 0.0,
+            "idle": 98.0,
+            "softirq": 0.0,
+            "system": 0.0,
+            "guest_nice": 0.0,
+            "user": 2.0,
+            "irq": 0.0,
+            "iowait": 0.0,
+            "nice": 0.0,
+            "steal": 0.0,
+            "freq": 1382
+        },
+        {
+            "guest": 0.0,
+            "idle": 99.0,
+            "softirq": 0.0,
+            "system": 0.0,
+            "guest_nice": 0.0,
+            "user": 1.0,
+            "irq": 0.0,
+            "iowait": 0.0,
+            "nice": 0.0,
+            "steal": 0.0,
+            "freq": 1400
+        },
+        {
+            "guest": 0.0,
+            "idle": 98.0,
+            "softirq": 0.0,
+            "system": 0.0,
+            "guest_nice": 0.0,
+            "user": 2.0,
+            "irq": 0.0,
+            "iowait": 0.0,
+            "nice": 0.0,
+            "steal": 0.0,
+            "freq": 1400
+        },
+        {
+            "guest": 0.0,
+            "idle": 97.0,
+            "softirq": 0.0,
+            "system": 1.0,
+            "guest_nice": 0.0,
+            "user": 1.0,
+            "irq": 1.0,
+            "iowait": 0.0,
+            "nice": 0.0,
+            "steal": 0.0,
+            "freq": 1397
+        }
+    ],
+    "net": {
+        "lo": {
+            "packets": [
+                2,
+                2
+            ],
+            "errors": [
+                0,
+                0
+            ],
+            "drops": [
+                0,
+                0
+            ],
+            "bytes": [
+                1526,
+                1526
+            ]
+        },
+        "wlan0": {
+            "packets": [
+                46,
+                16
+            ],
+            "errors": [
+                0,
+                0
+            ],
+            "drops": [
+                3,
+                0
+            ],
+            "bytes": [
+                11157,
+                4202
+            ]
+        }
+    },
+    "mem": {
+        "used": 5045407744,
+        "buffers": 48308,
+        "cached": 1875560,
+        "shared": 96332,
+        "swap": 173277184
+    },
+    "dsk": {
+        "nvme0n1p2": {
+            "used": 46821780,
+            "read": 15180,
+            "write": 48
+        },
+        "nvme0n1p1": {
+            "used": 73416,
+            "read": 0,
+            "write": 0
+        }
+    }
+}

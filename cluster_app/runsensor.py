@@ -76,7 +76,7 @@ async def send_responses():
     # getting specifications and sending them to backend
     specs = json.dumps(
         {
-            "header": id + f"spc!{round(time.time())}!{query["measure"]}",
+            "header": f"spec!{config.BATCH}!{config.LABEL}",
             **{str(tracker): tracker.specs for tracker in trackers},
         }
     )

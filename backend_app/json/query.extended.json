@@ -11,7 +11,7 @@
     "net_fields": ["bytes", "packets", "errors", "drops"],
     "net_extended": true,
     
-    "mem_fields": ["used", "buffers", "cached", "shared"],
+    "mem_fields": ["used", "buffers", "cached", "shared", "swap"],
     "mem_extended": true,
     
     "dsk_fields": ["used", "read", "write"],
