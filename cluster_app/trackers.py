@@ -187,7 +187,16 @@ class NetTracker(Tracker):
 
     def _get_response(self) -> dict:
         net_io = ps.net_io_counters(pernic=False)
-        response = self._get_io(net_io, self.prev) if self.prev else {}
+        if self.prev:
+            response = self._get_io(net_io, self.prev)
+            match Query()["measure"]:
+                case "kb":
+                    response["kbytes"] = response.pop("bytes")
+                case "mb":
+                    response["mbytes"] = response.pop("bytes")
+        else:
+            response = {}
+
         self.prev = net_io
         return response
 
@@ -202,6 +211,13 @@ class NetTracker(Tracker):
             else {}
         )
         self.prev = net_io_pernic
+        match Query()["measure"]:
+            case "kb":
+                for nic, resp in response.items():
+                    resp["kbytes"] = resp.pop("bytes")
+            case "mb":
+                for nic, resp in response.items():
+                    resp["mbytes"] = resp.pop("bytes")
         return response
 
     def track(self) -> dict:
@@ -245,11 +261,8 @@ class MemTracker(Tracker):
 
     def track(self) -> dict:
         mem = ps.virtual_memory()
-        swp = ps.swap_memory()            
-        response = {
-            field: self._getattr(field, mem, swp)
-            for field in self.fields
-        }
+        swp = ps.swap_memory()
+        response = {field: self._getattr(field, mem, swp) for field in self.fields}
 
         self._debug_tracking(response)
         return response
@@ -353,7 +366,6 @@ def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
 
 
 query = Query()
-mem = MemTracker()
-mem.extended = True
-mem.fields = ["used", "buffers", "cached", "shared", "swap"]
-m = mem.track()
+trackers = all_trackers()
+print(json.dumps({str(tracker): tracker.specs for tracker in trackers}, indent=4))
+
