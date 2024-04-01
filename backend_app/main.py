@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import random
 import threading
 
 from fastapi import (
@@ -19,13 +20,13 @@ from fastapi.security import HTTPBearer
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-import redis.asyncio as aioredis
+# import redis.asyncio as aioredis
+import asyncio as aio
 
 from backend_app import config
 from backend_app.utils.auth_utils import encode_jwt, decode_jwt
 
 from models import User
-
 
 logger = logging.getLogger(__name__)
 
@@ -136,13 +137,31 @@ async def check_cookie_login(user_data: dict = Depends(get_data_from_jwt_cookie)
     return {"status": "OK", "data": user_data, "details": "user authorized"}
 
 
-@app.websocket("/echo/{otp}")
+header_sended = False
+user_subscribed = False
+user_msg = ""
+from test_data import *
+@app.websocket("/echo")
 async def websocket_echo(ws: WebSocket):
+    global user_subscribed, user_msg
     await ws.accept()
     try:
         while True:
-            msg = await ws.receive_text()
-            ws.send_text(msg.upper())
+            if not user_subscribed:
+                msg = await ws.receive_text()
+                print(msg)
+                user_msg = msg
+            if user_msg == 'head':
+                await ws.send_json(HEADERS)
+                user_msg = 'head'
+            elif user_msg == 'mstd':
+                user_subscribed = True
+                user_msg = 'mstd'
+            if user_msg == 'mstd':
+                await ws.send_json(COMP_NODES)
+                print('data_is_sending')
+                COMP_NODES['cpu']['user'] = random.randint(0, 100)
+            await aio.sleep(1)
     except:
         pass
 
@@ -185,11 +204,11 @@ async def websocket_endpoint(ws: WebSocket):
         await conn_mgr.disconnect(ws)
 
 
-@app.on_event("startup")
-async def redis_startup():
-    global redis_client
-    redis_client = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-    threading.Thread(target=redis_listen, daemon=True).start()
+# @app.on_event("startup")
+# async def redis_startup():
+#     global redis_client
+#     redis_client = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT)
+#     threading.Thread(target=redis_listen, daemon=True).start()
 
 
 def redis_listen():

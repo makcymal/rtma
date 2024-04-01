@@ -22,7 +22,8 @@
   
 <script>
 import {useUserDataStore} from "@/stores/UserDataStore"
-import {mapStores, mapState, mapWritableState } from "pinia";
+import {useMonitoringDataStore} from '@/stores/MonitoringDataStore'
+import {mapStores, mapState, mapWritableState, mapActions } from "pinia";
 import axios from 'axios'
 
 export default {
@@ -30,8 +31,10 @@ export default {
   name: 'MenuHeader',
   computed: {
     ...mapStores(useUserDataStore),
+    ...mapStores(useMonitoringDataStore),
     ...mapState(useUserDataStore, ['userAuthenticated']),
     ...mapWritableState(useUserDataStore, ['userAuthenticated']),
+    ...mapActions(useMonitoringDataStore, ['sendMessage']),
   },
   mounted(){
     console.log(this.userAuthenticated)
@@ -56,6 +59,10 @@ export default {
     },
     monitoringPush(){
       this.$router.push("/monitoring");
+      // this.sendMessage('lsob')
+      // TODO: оставить только lsob
+      this.sendMessage('head')
+      this.sendMessage('mstd')
     },
     analiticsPush(){
       this.$router.push("/analitics");

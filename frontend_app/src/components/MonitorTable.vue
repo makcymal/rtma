@@ -4,22 +4,16 @@
       <table class="table-bordered header-table">
          <thead>
             <tr class="header-cell">
-               <th colspan="4" style="border-right-color: aliceblue;">INFO</th>
-               <th colspan="5" >CPU</th>
+               <th colspan="2" style="border-right-color: aliceblue;">INFO</th>
+               <th v-for="(cField, cfindex) in serverTableHeaderStd.clustered_fields" v-bind:key="cfindex" :colspan=serverTableHeaderStd.clustered_fields_span[cfindex]>
+                  {{  cField }}
+               </th>
             </tr>
             <tr>
-               <!-- info -->
-               <th>id</th>
-               <th>name</th>
-               <th>cores</th>
-               <th>load</th>
-
-               <!-- cpu -->
-               <th>sys</th>
-               <th>user</th>
-               <th>nice</th>
-               <th>iowait</th>
-               <th>idle</th>
+               <th> id </th>
+               <th> name </th>
+               <th v-for="(field, findex) in serverTableHeaderStd.fields" v-bind:key="findex">
+                  {{ field }} </th>
 
             </tr>
          </thead>
@@ -28,16 +22,10 @@
    <div class="table-responsive hide-scroll p-2 custom-table" style="max-height: 500px; margin: 0 !important; padding: 0 !important;">
      <table class="table-bordered" style="margin: 0 !important; padding: 0 !important;">
        <tbody>
-         <tr v-for="(info, index) in tableInfo" v-bind:key="index">
-            <td>{{index}}</td>
-            <td>{{info.name}}</td>
-            <td>{{info.cores}}</td>
-            <td>{{ info.load }}</td>
-            <td>{{ info.sys }}</td>
-            <td>{{ info.user }}</td>
-            <td>{{ info.nice }}</td>
-            <td>{{ info.iowait }}</td>
-            <td>{{ info.idle }}</td>
+         <tr v-for="(compNode, nodeIndex) in serverMsgStd" v-bind:key="nodeIndex">
+            <td>{{ nodeIndex }}</td>
+            <td>{{ compNode.name }}</td>
+            <td v-for="(fieldName, index) in serverTableHeaderStd.fields" v-bind:key="index"> {{ compNode[fieldName] }}</td>
          </tr>
        </tbody>
      </table>
@@ -73,31 +61,19 @@
 </template>
    
    
-   <script>
-   export default {
-       name: "MonitorTable",
-       data() {
-         return {
-            tableInfo: [{"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            {"id": 1, "name": "dgx01", "cores": 80, "load": 4, "sys": "0 %", "user": "5 %", "nice": "0 %", "iowait": "0 %", "idle": "95 %"},
-            ]
-         }
-       }
+<script>
+import {useMonitoringDataStore} from "@/stores/MonitoringDataStore"
+import { mapActions, mapStores, mapState } from "pinia";
+
+export default {
+   name: "MonitorTable", 
+   computed: {
+      ...mapActions(useMonitoringDataStore, ['sendMessage']),
+      ...mapStores(useMonitoringDataStore),
+      ...mapState(useMonitoringDataStore, ['serverTableHeaderStd', 'serverMsgStd']),
    }
-   </script>
+}
+</script>
    
    
 <style>
@@ -106,6 +82,7 @@
       background-color: rgb(160, 105, 209);
       color: white;
       border: 1px solid black;
+      min-height: 20vh;
    }
 
    .footer-cell {
@@ -116,8 +93,8 @@
 
    } */
    .colspan-cell {
-      width: 20vh;
-      height: 5vh;
+      min-width: 20vh;
+      min-height: 20vh;
    }
 
    .header-table {
@@ -132,19 +109,19 @@
    }
 
    tr {
-      padding: 5px;
       margin: 5px;
+      padding: 5px;
    }
 
    th {
-      width: 10vh;
+      min-width: 15vh;
       height: 5vh;
       text-align: center; 
       vertical-align: middle;
    }
 
    td {
-      width: 10vh;
+      min-width: 15vh;
       height: 5vh;
       text-align: center; 
       vertical-align: middle;

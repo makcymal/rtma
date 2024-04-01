@@ -14,7 +14,10 @@
     "jquery": "^3.7.1",
     "pinia": "^2.1.7",
     "popper.js": "^1.16.1",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
     "vue": "^3.2.13",
+    "vue-native-websocket-vue3": "^3.1.7",
     "vue-router": "^4.3.0"
   },
   "devDependencies": {

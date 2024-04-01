@@ -5,13 +5,16 @@
 <script>
 import axios from 'axios'
 import {useUserDataStore} from "@/stores/UserDataStore"
-import { mapWritableState, mapStores, mapState } from "pinia";
+import {useMonitoringDataStore} from "@/stores/MonitoringDataStore"
+import { mapWritableState, mapStores, mapState, mapActions } from "pinia";
 import router from './router';
+
 
 export default {
   name: 'App',
   computed: {
     ...mapStores(useUserDataStore),
+    ...mapActions(useMonitoringDataStore, ['setSocket', 'listenMsg']),
     ...mapState(useUserDataStore, ['userAuthenticated']),
     ...mapWritableState(useUserDataStore, ['userAuthenticated']),
   },
@@ -20,11 +23,14 @@ export default {
     .then((response) => {
             if(response.data.status === "OK"){
               this.userAuthenticated = true
+              this.setSocket;
+              this.listenMsg;
+              
             } else{
               this.userAuthenticated = false
             }
           }).catch(error => {
-              console.log(error.response.data.detail)
+              console.log(error)
               router.push("login")
             })
   }

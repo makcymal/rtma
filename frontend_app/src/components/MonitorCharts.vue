@@ -7,7 +7,7 @@
    
    <script>
    export default {
-       name: "MonitorTable",
+       name: "MonitorCharts",
        data() {
          
        }
@@ -16,5 +16,5 @@
    
    
 <style>
-я 
+
 </style>
