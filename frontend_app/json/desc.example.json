@@ -15,13 +15,11 @@
     },
     "net": {
         "recv": "kb",
-        "send": "kb",
-        "packets_recv": "packets",
-        "packets_send": "packets",
-        "errors_recv": "errors",
-        "errors_send": "errors",
-        "drops_recv": "drops",
-        "drops_send": "drops"
+        "sent": "kb",
+        "errin": "errors",
+        "errout": "errors",
+        "dropin": "drops",
+        "dropout": "drops"
     },
     "mem": {
         "used": "kb",

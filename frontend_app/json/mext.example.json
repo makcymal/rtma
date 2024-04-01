@@ -83,23 +83,19 @@
     "net": {
         "lo": {
             "recv": 1526,
-            "send": 1526,
-            "packets_recv": 2,
-            "packets_send": 2,
-            "errors_recv": 0,
-            "errors_send": 0,
-            "drops_recv": 0,
-            "drops_send": 0
+            "sent": 1526,
+            "errin": 0,
+            "errout": 0,
+            "dropin": 0,
+            "dropout": 0
         },
         "wlan0": {
             "recv": 11157,
-            "send": 4202,
-            "packets_recv": 46,
-            "packets_send": 16,
-            "errors_recv": 0,
-            "errors_send": 0,
-            "drops_recv": 3,
-            "drops_send": 0
+            "sent": 4202,
+            "errin": 0,
+            "errout": 0,
+            "dropin": 3,
+            "dropout": 0
         }
     },
     "mem": {

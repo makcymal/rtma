@@ -155,8 +155,9 @@ class CpuTracker(Tracker):
 class NetTracker(Tracker):
 
     FIELDS_MAP = {
+        "recv": "bytes_recv",
+        "sent": "bytes_sent"
         "bytes": ("bytes_recv", "bytes_sent"),
-        "packets": ("packets_recv", "packets_sent"),
         "errors": ("errin", "errout"),
         "drops": ("dropin", "dropout"),
     }
