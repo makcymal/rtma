@@ -1,0 +1,38 @@
+{
+    "header": "desc!knl:gvr!n01p001",
+    "cpu": {
+        "system": "%",
+        "user": "%",
+        "nice": "%",
+        "iowait": "%",
+        "idle": "%",
+        "irq": "%",
+        "softirq": "%",
+        "steal": "%",
+        "guest": "%",
+        "guest_nice": "%",
+        "freq": "hz"
+    },
+    "net": {
+        "recv": "kb",
+        "send": "kb",
+        "packets_recv": "packets",
+        "packets_send": "packets",
+        "errors_recv": "errors",
+        "errors_send": "errors",
+        "drops_recv": "drops",
+        "drops_send": "drops"
+    },
+    "mem": {
+        "used": "kb",
+        "buffers": "kb",
+        "cached": "kb",
+        "shared": "kb",
+        "swap": "kb"
+    },
+    "dsk": {
+        "used": "kb",
+        "read": "kb",
+        "write": "kb"
+    }
+}
