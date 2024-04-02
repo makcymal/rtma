@@ -111,7 +111,8 @@ class ResponseRepo:
 
     def send_last(self, batch: str, label: str):
         clients.notify(batch, self.std[batch][label])
-        clients.notify(f"{batch}!{label}", self.ext[batch][label])
+        if label in self.ext[batch]:
+            clients.notify(f"{batch}!{label}", self.ext[batch][label])
 
     # when sensor sends only extended responses while we need both extended and standard
     # we can reduce amount of information in extended resp to make standard
