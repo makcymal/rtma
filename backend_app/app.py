@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def startup_event(app: FastAPI):
     # start server talking to cluster sensors
-    serve_sensors()
+    aio.create_task(serve_sensors())
 
     # наивный envelope
     yield

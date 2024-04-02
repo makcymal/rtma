@@ -46,7 +46,7 @@ async def reconnect():
 async def recvall() -> str:
     raw_size = await reader.read(4)
     if raw_size == b"":
-        return config.BACKEND_DISCONNECT
+        return config.BACKEND_DISCONNECT_CODE
     size = struct.unpack("i", raw_size)[0]
 
     data = await reader.read(size)
@@ -70,7 +70,7 @@ async def send_responses():
     query = Query()
     # initializing trackers
     trackers = all_trackers()
-    
+
     id = f"{config.BATCH}!{config.LABEL}"
 
     # getting specifications and sending them to backend
@@ -88,7 +88,7 @@ async def send_responses():
             async with query_lock:
                 response = json.dumps(
                     {
-                        "header": f"resp!{id}!{query["mark"]}!{round(time.time())}",
+                        "header": f"resp!{id}!{query['mark']}!{round(time.time())}",
                         **{str(tracker): tracker.track() for tracker in trackers},
                     }
                 )
@@ -119,9 +119,22 @@ async def recv_queries():
 async def main():
     # connection to backend
     global reader, writer
-    reader, writer = await aio.open_connection(
-        host=config.HOST_BACKEND, port=config.PORT_BACKEND
-    )
+    writer = None
+    while (
+        not writer
+        or isinstance(writer, aio.StreamWriter)
+        and writer.is_closing()
+        and config.ALWAYS_RECONNECT
+    ):
+        try:
+            reader, writer = await aio.open_connection(
+                host=config.HOST_BACKEND,
+                port=config.PORT_BACKEND,
+            )
+        except OSError:
+            await aio.sleep(config.RECONNECT_DELAY)
+        
+    print(f"Connected {writer.get_extra_info('peername')}")
 
     # initializing singleton Query()
     query = Query()

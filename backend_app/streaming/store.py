@@ -2,6 +2,7 @@ import json
 import asyncio as aio
 import struct
 import secrets
+from pprint import pprint
 from copy import deepcopy as cp
 from fastapi import WebSocket
 from dataclasses import dataclass
@@ -96,7 +97,7 @@ class ResponseRepo:
 
     def insert(self, batch: str, label: str, resp: dict):
         proto, _batch, _label, mark, time = resp.pop("header").split("!")[:5]
-        if mark == "std":
+        if mark == "std" or mark == "flb":
             header = f"mstd!{batch}!{label}!{time}"
             self.std[batch][label] = {"header": header, **resp}
         elif mark == "ext":
@@ -187,7 +188,7 @@ class ResponseRepo:
 
 
 class QueryRepo:
-    __slots__ = ("std", "ext", "query_set", "query_cnt")
+    __slots__ = ("std", "std_str", "ext", "ext_str", "query_set", "query_cnt")
 
     def __init__(self) -> None:
         with open("json/query.standard.json", "r") as std_file:

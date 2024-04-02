@@ -1,14 +1,12 @@
 {
     "mark": "flb",
-    
     "interval": 2,
-    
     "measure": "kb",
     
     "cpu_fields": ["system", "user", "iowait", "idle", "freq"],
     "cpu_extended": false,
     
-    "net_fields": ["bytes"],
+    "net_fields": ["recv", "sent"],
     "net_extended": false,
     
     "mem_fields": ["used", "swap"],

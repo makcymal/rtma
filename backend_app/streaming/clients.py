@@ -1,6 +1,6 @@
 import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from store import clients, sensors
+from streaming.store import clients, sensors
 
 
 ws_router = APIRouter()

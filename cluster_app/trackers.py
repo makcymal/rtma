@@ -124,9 +124,6 @@ class CpuTracker(Tracker):
                 {field: getattr(cpu_times, field) for field in cpu_times_fields}
                 for cpu_times in cpu_times_percpu
             ]
-            logger.debug(
-                "Filled cpu_tracker.response with cpu_times_percent per each cpu"
-            )
         else:
             logger.error(
                 "Cannot get psutil.cpu_times_percent(percpu=True): got empty list"
@@ -138,8 +135,6 @@ class CpuTracker(Tracker):
                 core_response["freq"] = round(
                     freq.current * 1000 if freq.current < 10 else freq.current
                 )
-
-            logger.debug("Filled cpu_tracker.response with cpu_freq per each cpu")
 
         return response
 
@@ -182,7 +177,7 @@ class NetTracker(Tracker):
 
     def _get_response(self) -> dict:
         net_io = ps.net_io_counters(pernic=False)
-        response = self._get_io(net_io, self.prev) if self.prev else response
+        response = self._get_io(net_io, self.prev) if self.prev else {}
         self.prev = net_io
         return response
 
@@ -337,7 +332,6 @@ class DskTracker(Tracker):
 def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
     return (CpuTracker(), NetTracker(), MemTracker(), DskTracker())
 
-
-query = Query()
-trackers = all_trackers()
-print(json.dumps({str(tracker): tracker.specs for tracker in trackers}, indent=4))
+    # query = Query()
+    # trackers = all_trackers()
+    # print(json.dumps({str(tracker): tracker.specs for tracker in trackers}, indent=4))
