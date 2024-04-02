@@ -11,23 +11,36 @@ from query import Query
 
 logger = logging.getLogger(__name__)
 
-BYTES_DENOM = 1024
-
 
 class Tracker(Subscriber, ABC):
 
-    __slots__ = ("debug", "specs", "interval", "extended", "fields", "prev")
+    __slots__ = (
+        "debug",
+        "interval",
+        "bytes_denom",
+        "specs",
+        "fields",
+        "extended",
+        "prev",
+    )
 
     def __init__(self):
         Query().subscribe(self)
+        self.get_update()
         self.specs = {}
         self._fill_specs()
         logger.info(f"Got {str(self)} specs")
 
     def get_update(self):
         query = Query()
-        self.debug = query.debug
         self.interval = query["interval"]
+        if m := query["measure"] == "kb":
+            self.bytes_denom = 1024
+        elif m == "mb":
+            self.bytes_denom = 1024 * 1024
+        else:
+            self.bytes_denom = 1
+        self.debug = query.debug
         self.extended = query[f"{str(self)}_extended"]
         self.fields = set(query[f"{str(self)}_fields"])
         self._validate_query_fields()
@@ -111,9 +124,6 @@ class CpuTracker(Tracker):
                 {field: getattr(cpu_times, field) for field in cpu_times_fields}
                 for cpu_times in cpu_times_percpu
             ]
-            logger.debug(
-                "Filled cpu_tracker.response with cpu_times_percent per each cpu"
-            )
         else:
             logger.error(
                 "Cannot get psutil.cpu_times_percent(percpu=True): got empty list"
@@ -125,8 +135,6 @@ class CpuTracker(Tracker):
                 core_response["freq"] = round(
                     freq.current * 1000 if freq.current < 10 else freq.current
                 )
-
-            logger.debug("Filled cpu_tracker.response with cpu_freq per each cpu")
 
         return response
 
@@ -142,10 +150,12 @@ class CpuTracker(Tracker):
 class NetTracker(Tracker):
 
     FIELDS_MAP = {
-        "bytes": ("bytes_recv", "bytes_sent"),
-        "packets": ("packets_recv", "packets_sent"),
-        "errors": ("errin", "errout"),
-        "drops": ("dropin", "dropout"),
+        "recv": "bytes_recv",
+        "sent": "bytes_sent",
+        "errin": "errin",
+        "errout": "errout",
+        "dropin": "dropin",
+        "dropout": "dropout",
     }
     VALID_FIELDS = set(FIELDS_MAP.keys())
 
@@ -158,15 +168,8 @@ class NetTracker(Tracker):
     def _get_io(self, io: namedtuple, prev: namedtuple) -> dict:
         mp = self.__class__.FIELDS_MAP
         response = {
-            field: (
-                round(
-                    (io._asdict()[mp[field][0]] - prev._asdict()[mp[field][0]])
-                    / self.interval
-                ),
-                round(
-                    (io._asdict()[mp[field][1]] - prev._asdict()[mp[field][1]])
-                    / self.interval
-                ),
+            field: round(
+                (getattr(io, mp[field]) - getattr(prev, mp[field])) / self.interval
             )
             for field in self.fields
         }
@@ -203,22 +206,31 @@ class NetTracker(Tracker):
 # отслеживание мемов в паблике караси БЕСПЛАТНО
 class MemTracker(Tracker):
 
-    VALID_FIELDS = set(("used", "buffers", "cached", "shared"))
+    VALID_FIELDS = set(("used", "buffers", "cached", "shared", "swap"))
 
     def __str__(self):
         return "mem"
 
     def _fill_specs(self):
-        self.specs["mem_total"] = round(ps.virtual_memory().total / BYTES_DENOM)
-        self.specs["swp_total"] = round(ps.swap_memory().total / BYTES_DENOM)
+        self.specs["mem_total"] = round(ps.virtual_memory().total / self.bytes_denom)
+        self.specs["swp_total"] = round(ps.swap_memory().total / self.bytes_denom)
+
+    def _getattr(self, field: str, mem: namedtuple, swp: namedtuple) -> float:
+        if field == "swap":
+            return swp.used if self.extended else swp.percent
+        elif field == "used":
+            return mem.used if self.extended else mem.percent
+        else:
+            return (
+                round(getattr(mem, field) / self.bytes_denom)
+                if self.extended
+                else round(getattr(mem, field) * 100 / mem.total, 1)
+            )
 
     def track(self) -> dict:
-        response = {
-            field: round(getattr(ps.virtual_memory(), field) / BYTES_DENOM)
-            for field in self.fields
-        }
-        if self.extended:
-            response["swp_used"] = round(ps.swap_memory().used / BYTES_DENOM)
+        mem = ps.virtual_memory()
+        swp = ps.swap_memory()
+        response = {field: self._getattr(field, mem, swp) for field in self.fields}
 
         self._debug_tracking(response)
         return response
@@ -237,7 +249,7 @@ class DskTracker(Tracker):
             {
                 "name": os.path.basename(part.device),
                 "mountpoint": part.mountpoint,
-                "total": round(ps.disk_usage(part.mountpoint).total / BYTES_DENOM),
+                "total": round(ps.disk_usage(part.mountpoint).total / self.bytes_denom),
             }
             for part in partitions
         ]
@@ -247,7 +259,7 @@ class DskTracker(Tracker):
         if "used" in self.fields:
             response["used"] = round(
                 sum(ps.disk_usage(spec["mountpoint"]).used for spec in self.specs)
-                / BYTES_DENOM
+                / self.bytes_denom
             )
 
         disk_io = ps.disk_io_counters(perdisk=False)
@@ -255,14 +267,14 @@ class DskTracker(Tracker):
             if self.prev:
                 response["read"] = round(
                     (disk_io.read_bytes - self.prev.read_bytes)
-                    / BYTES_DENOM
+                    / self.bytes_denom
                     / self.interval
                 )
         if "write" in self.fields:
             if self.prev:
                 response["write"] = round(
                     (disk_io.write_bytes - self.prev.write_bytes)
-                    / BYTES_DENOM
+                    / self.bytes_denom
                     / self.interval
                 )
 
@@ -278,7 +290,9 @@ class DskTracker(Tracker):
         if "used" in self.fields:
             for name, spec in zip(names, self.specs):
                 response[name].update(
-                    used=round(ps.disk_usage(spec["mountpoint"]).used / BYTES_DENOM)
+                    used=round(
+                        ps.disk_usage(spec["mountpoint"]).used / self.bytes_denom
+                    )
                 )
 
         disk_io = ps.disk_io_counters(perdisk=True)
@@ -288,7 +302,7 @@ class DskTracker(Tracker):
                     response[name].update(
                         read=round(
                             (disk_io[name].read_bytes - self.prev[name].read_bytes)
-                            / BYTES_DENOM
+                            / self.bytes_denom
                             / self.interval
                         )
                     )
@@ -298,7 +312,7 @@ class DskTracker(Tracker):
                     response[name].update(
                         write=round(
                             (disk_io[name].write_bytes - self.prev[name].write_bytes)
-                            / BYTES_DENOM
+                            / self.bytes_denom
                             / self.interval
                         )
                     )
@@ -313,3 +327,11 @@ class DskTracker(Tracker):
 
         self._debug_tracking(response)
         return response
+
+
+def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
+    return (CpuTracker(), NetTracker(), MemTracker(), DskTracker())
+
+    # query = Query()
+    # trackers = all_trackers()
+    # print(json.dumps({str(tracker): tracker.specs for tracker in trackers}, indent=4))

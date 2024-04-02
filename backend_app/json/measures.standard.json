@@ -1,0 +1,21 @@
+{
+    "cpu": {
+        "system": "%",
+        "user": "%",
+        "iowait": "%",
+        "idle": "%",
+        "freq": "hz"
+    },
+    "net": {
+        "recv": "kb",
+        "sent": "kb"
+    },
+    "mem": {
+        "used": "kb",
+        "swap": "kb"
+    },
+    "dsk": {
+        "read": "kb",
+        "write": "kb"
+    }
+}

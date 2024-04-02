@@ -1,6 +1,5 @@
 import typing as tp
 import logging
-from threading import Lock
 from abc import abstractmethod, ABC
 
 
@@ -19,7 +18,7 @@ class Subscriber(ABC):
 
 
 class Publisher:
-
+    __slots__ = ("_subs",)
     _subs: tp.Set[Subscriber]
 
     def __init__(self):
@@ -40,16 +39,10 @@ class Publisher:
 
 
 class Singleton(type):
-
     _instance = None
-    _lock: Lock = Lock()
 
     def __call__(cls, *args, **kwargs):
-        with cls._lock:
-            if not cls._instance:
-                instance = super().__call__(*args, **kwargs)
-                cls._instance = instance
-
-                logger.debug(f"Singleton {cls} accessed for the first time")
-
+        if not cls._instance:
+            cls._instance = super().__call__(*args, **kwargs)
+            logger.debug(f"Singleton {cls} instantiated")
         return cls._instance
