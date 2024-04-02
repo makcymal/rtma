@@ -156,10 +156,11 @@ class NetTracker(Tracker):
 
     FIELDS_MAP = {
         "recv": "bytes_recv",
-        "sent": "bytes_sent"
-        "bytes": ("bytes_recv", "bytes_sent"),
-        "errors": ("errin", "errout"),
-        "drops": ("dropin", "dropout"),
+        "sent": "bytes_sent",
+        "errin": "errin",
+        "errout": "errout",
+        "dropin": "dropin",
+        "dropout": "dropout",
     }
     VALID_FIELDS = set(FIELDS_MAP.keys())
 
@@ -172,15 +173,8 @@ class NetTracker(Tracker):
     def _get_io(self, io: namedtuple, prev: namedtuple) -> dict:
         mp = self.__class__.FIELDS_MAP
         response = {
-            field: (
-                round(
-                    (io._asdict()[mp[field][0]] - prev._asdict()[mp[field][0]])
-                    / self.interval
-                ),
-                round(
-                    (io._asdict()[mp[field][1]] - prev._asdict()[mp[field][1]])
-                    / self.interval
-                ),
+            field: round(
+                (getattr(io, mp[field]) - getattr(prev, mp[field])) / self.interval
             )
             for field in self.fields
         }
@@ -188,16 +182,7 @@ class NetTracker(Tracker):
 
     def _get_response(self) -> dict:
         net_io = ps.net_io_counters(pernic=False)
-        if self.prev:
-            response = self._get_io(net_io, self.prev)
-            match Query()["measure"]:
-                case "kb":
-                    response["kbytes"] = response.pop("bytes")
-                case "mb":
-                    response["mbytes"] = response.pop("bytes")
-        else:
-            response = {}
-
+        response = self._get_io(net_io, self.prev) if self.prev else response
         self.prev = net_io
         return response
 
@@ -212,13 +197,6 @@ class NetTracker(Tracker):
             else {}
         )
         self.prev = net_io_pernic
-        match Query()["measure"]:
-            case "kb":
-                for nic, resp in response.items():
-                    resp["kbytes"] = resp.pop("bytes")
-            case "mb":
-                for nic, resp in response.items():
-                    resp["mbytes"] = resp.pop("bytes")
         return response
 
     def track(self) -> dict:
@@ -244,12 +222,6 @@ class MemTracker(Tracker):
 
     def _getattr(self, field: str, mem: namedtuple, swp: namedtuple) -> float:
         if field == "swap":
-            if self.extended:
-                print("MemTracker.extended = True")
-                return swp.used
-            else:
-                print("MemTracker.extended = False")
-                return swp.percent
             return swp.used if self.extended else swp.percent
         elif field == "used":
             return mem.used if self.extended else mem.percent
@@ -369,4 +341,3 @@ def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
 query = Query()
 trackers = all_trackers()
 print(json.dumps({str(tracker): tracker.specs for tracker in trackers}, indent=4))
-

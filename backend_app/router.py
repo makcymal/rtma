@@ -12,7 +12,7 @@ from starlette.responses import JSONResponse
 from models import User
 from config import settings
 from auth import encode_jwt, decode_jwt
-from streaming import ws_router
+from streaming.clients import ws_router
 
 
 logger = logging.getLogger(__name__)

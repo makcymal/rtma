@@ -71,12 +71,12 @@ async def send_responses():
     # initializing trackers
     trackers = all_trackers()
     
-    id = f"{config.BATCH}!{config.LABEL}!"
+    id = f"{config.BATCH}!{config.LABEL}"
 
     # getting specifications and sending them to backend
     specs = json.dumps(
         {
-            "header": f"spec!{config.BATCH}!{config.LABEL}",
+            "header": f"spec!{id}",
             **{str(tracker): tracker.specs for tracker in trackers},
         }
     )
@@ -88,7 +88,7 @@ async def send_responses():
             async with query_lock:
                 response = json.dumps(
                     {
-                        "header": id + f"{query["mark"]}!{round(time.time())}!{query["measure"]}",
+                        "header": f"resp!{id}!{query["mark"]}!{round(time.time())}",
                         **{str(tracker): tracker.track() for tracker in trackers},
                     }
                 )
