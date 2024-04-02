@@ -59,10 +59,10 @@ export default {
     },
     monitoringPush(){
       this.$router.push("/monitoring");
-      // this.sendMessage('lsob')
-      // TODO: оставить только lsob
-      this.sendMessage('head')
-      this.sendMessage('mstd')
+      // // this.sendMessage('lsob')
+      // // TODO: оставить только lsob
+      // this.sendMessage('head')
+      // this.sendMessage('mstd')
     },
     analiticsPush(){
       this.$router.push("/analitics");

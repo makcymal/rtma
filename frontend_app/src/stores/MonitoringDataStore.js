@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { formatHeaderOutput, formatComputeNodeOutput} from "../utils/prettyMonTable"
+import { formatHeaderOutput, formatComputeNodeOutput, computeAvgTotalOutput} from "../utils/prettyMonTable"
 
 // Client can send one of the followings messages:
 //     "lsob" - get LiSt Of Batches
@@ -21,6 +21,7 @@ export const useMonitoringDataStore = defineStore('monitoringDataStore', {
         serverMsgExt: [],
         serverMsgSpc: [],
         serverBatchesList: [],
+        avgTotalData: { "avg" : [], "total": []}
       }),
     actions: {
         setSocket() {
@@ -53,17 +54,20 @@ export const useMonitoringDataStore = defineStore('monitoringDataStore', {
               if (!nodeMonitored){
                 this.serverMsgStd.push(formatComputeNodeOutput(parsed_data))
               }
+              this.avgTotalData = computeAvgTotalOutput(this.serverTableHeaderStd, this.serverMsgStd)
 
             } else if (parsed_data.header.split("!")[0] === "head") {
               this.serverTableHeaderStd = formatHeaderOutput(parsed_data)
               this.serverMsgStd = []
               this.serverMsgExt = []
+              this.avgTotalData = { "avg" : [], "total": []}
 
             } else if (parsed_data.header.split("!")[0] === "lsob"){
-              this.serverBatchesList = parsed_data
+              this.serverBatchesList = parsed_data.batches
               this.serverTableHeaderStd = {}
               this.serverMsgStd = []
               this.serverMsgExt = []
+              this.avgTotalData = { "avg" : [], "total": []}
             }
             });
         }

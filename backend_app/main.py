@@ -141,27 +141,48 @@ header_sended = False
 user_subscribed = False
 user_msg = ""
 from test_data import *
+import asyncio
 @app.websocket("/echo")
 async def websocket_echo(ws: WebSocket):
     global user_subscribed, user_msg
     await ws.accept()
     try:
         while True:
-            if not user_subscribed:
-                msg = await ws.receive_text()
-                print(msg)
-                user_msg = msg
-            if user_msg == 'head':
+            msg = await ws.receive_text()
+            print(msg.split("?"))
+            user_msg = msg
+            if user_msg.split("?")[0] == 'head':
                 await ws.send_json(HEADERS)
                 user_msg = 'head'
-            elif user_msg == 'mstd':
+            elif user_msg.split("?")[0] == 'lsob':
+                await ws.send_json({
+    "header": "lsob",
+    "batches": ["gvr:cascade", "gvr:dgx", "gvr:gpu", "gvr:icelake", "gvr:knl", "hlit:wn", "jhub", "service", "storage", "vm"]})
+            elif user_msg.split("?")[0] == 'mstd':
                 user_subscribed = True
-                user_msg = 'mstd'
-            if user_msg == 'mstd':
+            if user_msg.split("?")[0] == 'mstd' and user_msg.split("?")[1] == 'gvr:dgx':
                 await ws.send_json(COMP_NODES)
                 print('data_is_sending')
                 COMP_NODES['cpu']['user'] = random.randint(0, 100)
-            await aio.sleep(1)
+                COMP_NODES['header'] = random.choice(["mstd!gvr:knl!n01p001!1711098779", "mstd!gvr:knl!n01p002!1711098779",
+                                                      "mstd!gvr:knl!n01p003!1711098779", "mstd!gvr:knl!n01p004!1711098779",
+                                                      "mstd!gvr:knl!n01p005!1711098779", "mstd!gvr:knl!n01p006!1711098779",
+                                                      "mstd!gvr:knl!n01p007!1711098779", "mstd!gvr:knl!n01p008!1711098779",
+                                                      "mstd!gvr:knl!n01p009!1711098779", "mstd!gvr:knl!n01p010!1711098779"
+                                                      "mstd!gvr:knl!n01p011!1711098779", "mstd!gvr:knl!n01p012!1711098779",
+                                                      "mstd!gvr:knl!n01p013!1711098779", "mstd!gvr:knl!n01p014!1711098779",
+                                                      "mstd!gvr:knl!n01p015!1711098779", "mstd!gvr:knl!n01p016!1711098779",
+                                                      "mstd!gvr:knl!n01p016!1711098779", "mstd!gvr:knl!n01p017!1711098779",
+                                                      "mstd!gvr:knl!n01p018!1711098779", "mstd!gvr:knl!n01p019!1711098779"])
+            elif user_msg.split("?")[0] == 'mstd' and user_msg.split("?")[1] == 'gvr:gpu':
+                await ws.send_json(COMP_NODES)
+                print('111data_is_sending1')
+                COMP_NODES['cpu']['user'] = random.randint(0, 100)
+                COMP_NODES['header'] = random.choice(
+                    ["mstd!gvr:knl!n01p001!1711098779", "mstd!gvr:knl!n01p002!1711098779",
+                     "mstd!gvr:knl!n01p003!1711098779", "mstd!gvr:knl!n01p004!1711098779",
+                     "mstd!gvr:knl!n01p005!1711098779"])
+            await aio.sleep(0.5)
     except:
         pass
 
