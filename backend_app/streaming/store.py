@@ -2,7 +2,6 @@ import json
 import asyncio as aio
 import struct
 import secrets
-from pprint import pprint
 from copy import deepcopy as cp
 from fastapi import WebSocket
 from dataclasses import dataclass

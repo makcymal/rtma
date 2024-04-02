@@ -29,5 +29,5 @@ async def handle_sensor(reader: aio.StreamReader, writer: aio.StreamWriter):
             break
         print(resp)
         # trigger sending resp to client
-        if responses.insert(batch, label, json.loads(resp)):
-            responses.send_last(batch, label)
+        responses.insert(batch, label, json.loads(resp))
+        responses.send_last(batch, label)
