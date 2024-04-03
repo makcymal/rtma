@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 # https://stackoverflow.com/questions/77674952/how-to-run-fastapi-app-and-tcp-server-as-async-tasks-within-the-same-fastapi-eve
 @asynccontextmanager
 async def startup_event(app: FastAPI):
-    # start server talking to cluster sensors
     aio.create_task(serve_sensors())
+    logger.info("Started server listening to sensors")
 
     # наивный envelope
     yield

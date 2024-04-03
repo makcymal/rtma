@@ -23,18 +23,21 @@ router.include_router(ws_router)
 
 @router.get("/")
 async def get():
+    logger.debug("GET: /")
     return {"hello": "hello"}
+
+
+ipa_client = ClientMeta("ipa1-hlit.jinr.ru")
 
 
 @router.post("/api/token/login")
 async def login(user: User):
+    logger.debug("POST: /api/token/login")
     try:
-        # может вынести ClientMeta как глобальную переменную?
-        client = ClientMeta("ipa1-hlit.jinr.ru")
-        client.login(user.login, user.password)
+        ipa_client.login(user.login, user.password)
     except InvalidSessionPassword:
         return {"status": "ERROR", "data": None, "details": "Invalid login or password"}
-    user_data = client.user_show(user.login)["result"]
+    user_data = ipa_client.user_show(user.login)["result"]
     user_public_data = {
         "sub": user_data["uid"][0],
         "id": user_data["uid"][0],
@@ -42,6 +45,7 @@ async def login(user: User):
         "mail": user_data["mail"][0],
         "homedirectory": user_data["homedirectory"][0],
     }
+    logger.debug(f"Client {user_public_data["name"]} logged in")
 
     access_token = encode_jwt(user_public_data)
 
@@ -66,6 +70,7 @@ async def login(user: User):
 
 @router.post("/api/token/logout")
 async def logout():
+    logger.debug("POST: /api/token/logout")
     content = {"status": "OK", "data": None, "details": "user logged out"}
 
     response = JSONResponse(content=content)
@@ -93,15 +98,6 @@ def get_data_from_jwt_cookie(request: Request):
 
 @router.get("/check-cookie-login")
 async def check_cookie_login(user_data: dict = Depends(get_data_from_jwt_cookie)):
+    logger.debug("GET: /check-cookie-login")
+    logger.debug(f"Client {user_data['name']} checked cookie login")
     return {"status": "OK", "data": user_data, "details": "user authorized"}
-
-
-# @router.websocket("/echo/{otp}")
-# async def websocket_echo(ws: WebSocket):
-#     await ws.accept()
-#     try:
-#         while True:
-#             msg = await ws.receive_text()
-#             ws.send_text(msg.upper())
-#     except:
-#         pass
