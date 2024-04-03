@@ -137,12 +137,37 @@ class ResponseRepo:
                     f"There is batch {batch} in queries so added mstd response from sensor {batch}!{label}"
                 )
 
+    def _flatten_ext(self, resp: dict) -> dict:
+        net = resp["net"]
+        resp["net"] = [
+            {
+                "name": key,
+                **val,
+            }
+            for key, val in net.items()
+        ]
+        
+        mem = resp["mem"]
+        resp["mem"] = [mem]
+        
+        dsk = resp["dsk"]
+        resp["dsk"] = [
+            {
+                "name": key,
+                **val,
+            }
+            for key, val in dsk.items()
+        ]
+        return resp
+
     def send_last(self, batch: str, label: str):
         logger.debug(f"Sending last mstd response from sensor {batch}!{label}")
         clients.notify(batch, self.std[batch][label])
         if label in self.ext[batch]:
             logger.debug(f"Sending last mext response from sensor {batch}!{label}")
-            clients.notify(f"{batch}!{label}", self.ext[batch][label])
+            clients.notify(
+                f"{batch}!{label}", self._flatten_ext(self.ext[batch][label])
+            )
 
     # when sensor sends only extended responses while we need both extended and standard
     # we can reduce amount of information in extended resp to make standard
@@ -255,15 +280,17 @@ class QueryRepo:
     async def inject_query(self, query: str):
         tokens = query.split("!")
         if len(tokens) == 1:
-            
+
             batch = query
             for label in sensors._ls[batch]:
                 if f"{batch}!{label}" not in self.query_set:
                     sensor: Sensor = sensors._ls[batch][label]
                     await sendall(self.std_str, sensor.writer)
                 else:
-                    logger.debug(f"Didn't inject std query {query} to sensor {batch}!{label} since it has ext query")
-                    
+                    logger.debug(
+                        f"Didn't inject std query {query} to sensor {batch}!{label} since it has ext query"
+                    )
+
         else:
             batch, label = tokens[:2]
             sensor: Sensor = sensors._ls[batch][label]
@@ -278,15 +305,21 @@ class QueryRepo:
                 if f"{batch}!{label}" not in self.query_set:
                     sensor: Sensor = sensors._ls[batch][label]
                     await sendall("stop", sensor.writer)
-                    logger.debug(f"Seized std query {query} from sensor {batch}!{label}")
+                    logger.debug(
+                        f"Seized std query {query} from sensor {batch}!{label}"
+                    )
                 else:
-                    logger.debug(f"Didn't seize query {query} from sensor {batch}!{label} since it has ext query")
+                    logger.debug(
+                        f"Didn't seize query {query} from sensor {batch}!{label} since it has ext query"
+                    )
         else:
             batch, label = tokens[:2]
             sensor: Sensor = sensors._ls[batch][label]
             if batch in self.query_set:
                 await sendall(self.std_str, sensor.writer)
-                logger.debug(f"Replaces ext query {query} with std on sensor {batch}!{label}")
+                logger.debug(
+                    f"Replaces ext query {query} with std on sensor {batch}!{label}"
+                )
             else:
                 await sendall("stop", sensor.writer)
                 logger.debug(f"Seized ext query {query} from sensor {batch}!{label}")

@@ -80,8 +80,9 @@
             "freq": 1397
         }
     ],
-    "net": {
-        "lo": {
+    "net": [
+        {
+            "name": "lo", 
             "recv": 1526,
             "sent": 1526,
             "errin": 0,
@@ -89,7 +90,8 @@
             "dropin": 0,
             "dropout": 0
         },
-        "wlan0": {
+        {
+            "name": "wlan0",
             "recv": 11157,
             "sent": 4202,
             "errin": 0,
@@ -97,7 +99,7 @@
             "dropin": 3,
             "dropout": 0
         }
-    },
+    ],
     "mem": {
         "used": 5045407744,
         "buffers": 48308,
@@ -105,16 +107,18 @@
         "shared": 96332,
         "swap": 173277184
     },
-    "dsk": {
-        "nvme0n1p2": {
+    "dsk": [
+        {
+            "name": "nvme0n1p2",
             "used": 46821780,
             "read": 15180,
             "write": 48
         },
-        "nvme0n1p1": {
+        {
+            "name": "nvme0n1p1",
             "used": 73416,
             "read": 0,
             "write": 0
         }
-    }
+    ]
 }
