@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import psutil as ps
 import logging
 from abc import abstractmethod, ABC
@@ -332,6 +333,8 @@ class DskTracker(Tracker):
 def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
     return (CpuTracker(), NetTracker(), MemTracker(), DskTracker())
 
-    # query = Query()
-    # trackers = all_trackers()
-    # print(json.dumps({str(tracker): tracker.specs for tracker in trackers}, indent=4))
+query = Query()
+trackers = all_trackers()
+for i in range(10):
+    print({str(tracker): tracker.track() for tracker in trackers})
+    time.sleep(2)

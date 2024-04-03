@@ -11,8 +11,8 @@
         "sent": "kb"
     },
     "mem": {
-        "used": "kb",
-        "swap": "kb"
+        "used": "%",
+        "swap": "%"
     },
     "dsk": {
         "read": "kb",
