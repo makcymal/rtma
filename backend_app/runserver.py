@@ -1,4 +1,9 @@
+import os
 import uvicorn
+
+
+if not os.path.exists("log"):
+    os.mkdir("log")
 
 
 if __name__ == "__main__":

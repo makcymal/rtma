@@ -45,7 +45,7 @@ async def login(user: User):
         "mail": user_data["mail"][0],
         "homedirectory": user_data["homedirectory"][0],
     }
-    logger.debug(f"Client {user_public_data["name"]} logged in")
+    logger.debug(f"Client {user_public_data['name']} logged in")
 
     access_token = encode_jwt(user_public_data)
 
