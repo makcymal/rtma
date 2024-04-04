@@ -13,7 +13,7 @@ SENSORS_PORT = 42400
 
 # entry point for the communication with sensors
 async def serve_sensors():
-    server = await aio.start_server(handle_sensor, port=SENSORS_PORT, reuse_port=True)
+    server = await aio.start_server(handle_sensor, port=SENSORS_PORT)
     await server.serve_forever()
 
 

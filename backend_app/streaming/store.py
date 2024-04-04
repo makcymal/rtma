@@ -302,7 +302,7 @@ class QueryRepo:
             await sendall(self.ext_str, sensor.writer)
             logger.debug(f"Injected ext query {query} to sensor {batch}!{label}")
 
-    async def seize_qeury(self, query: str):
+    async def seize_query(self, query: str):
         tokens = query.split("!")
         
         if len(tokens) == 1:
