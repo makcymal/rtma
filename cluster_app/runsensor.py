@@ -1,3 +1,4 @@
+import os
 import time
 import json
 import struct
@@ -40,7 +41,12 @@ async def reconnect():
                 exit(1)
 
     logger.info("Reconnected successfully")
-    await sendall(specs)
+    print(f"Connected {writer.get_extra_info('peername')}")
+    try:
+        await sendall(specs)
+    except:
+        # await aio.sleep(config.RECONNECT_DELAY)
+        await reconnect()
 
 
 async def recvall() -> str:
@@ -80,24 +86,37 @@ async def send_responses():
             **{str(tracker): tracker.specs for tracker in trackers},
         }
     )
-    await sendall(specs)
+    try:
+        await sendall(specs)
+    except BrokenPipeError:
+        await reconnect()
 
     prev_resp_hash = 0
     while True:
-        async with run_lock:
-            async with query_lock:
-                response = json.dumps(
-                    {
-                        "header": f"resp!{id}!{query['mark']}!{round(time.time())}",
-                        **{str(tracker): tracker.track() for tracker in trackers},
-                    }
-                )
-                try:
-                    if (curr_resp_hash := hash(response)) != prev_resp_hash:
-                        await sendall(response)
-                    prev_resp_hash = curr_resp_hash
-                except ConnectionResetError:
-                    await reconnect()
+        # await run_lock.acquire()
+        await query_lock.acquire()
+        
+        response = json.dumps(
+            {
+                "header": f"resp!{id}!{query['mark']}!{round(time.time())}",
+                **{str(tracker): tracker.track() for tracker in trackers},
+            }
+        )
+        try:
+            if (curr_resp_hash := hash(response)) != prev_resp_hash:
+                await sendall(response)
+            prev_resp_hash = curr_resp_hash
+        except ConnectionResetError:
+            # await aio.sleep(config.RECONNECT_DELAY)
+            await reconnect()
+        except BrokenPipeError:
+            # await aio.sleep(config.RECONNECT_DELAY)
+            await reconnect()
+            
+        if query_lock.locked():
+            query_lock.release()
+        # if run_lock.locked():
+        #     run_lock.release()
         await aio.sleep(Query()["interval"])
 
 
@@ -108,19 +127,24 @@ async def recv_queries():
             if (qry_str := await recvall()) == config.BACKEND_DISCONNECT_CODE:
                 logger.debug("Received BACKEND_DISCONNECT_CODE, trying to reconnect")
                 await reconnect()
+            
             if qry_str == "stop":
-                logger.debug("Got stop message, waiting for run_lock to acquire")
-                await run_lock.acquire()
-                logger.debug("run_lock acquired")
+                pass
+                # logger.debug("Got stop message, waiting for run_lock to acquire")
+                # await run_lock.acquire()
+                # logger.debug("run_lock acquired")
             else:
-                if run_lock.locked():
-                    run_lock.release()
-                    logger.debug("Releasing run_lock")
+                # if run_lock.locked():
+                #     run_lock.release()
+                #     logger.debug("Releasing run_lock")
                 logger.debug(f"New query: {qry_str}")
                 async with query_lock:
                     Query().update(qry_str)
         except ConnectionResetError:
-            logger.debug("WTF it's disconnected")
+            logger.debug("ConnnectionReserError: it's disconnected")
+            await reconnect()
+        except BrokenPipeError:
+            logger.debug("BrokerPipeError: it's disconnected")
             await reconnect()
 
 
@@ -146,6 +170,9 @@ async def main():
 
     # initializing singleton Query()
     query = Query()
+
+    if os.path.exists("sensor.log"):
+        os.remove("sensor.log")
 
     # logging
     logging.basicConfig(

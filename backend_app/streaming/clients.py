@@ -53,6 +53,7 @@ async def handle_client(ws: WebSocket):
 
         except:
             clients.disconnect(ws)
+            break
 
 
 async def send_batches(ws: WebSocket):

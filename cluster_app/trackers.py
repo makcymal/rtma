@@ -333,8 +333,8 @@ class DskTracker(Tracker):
 def all_trackers() -> tuple[CpuTracker, NetTracker, MemTracker, DskTracker]:
     return (CpuTracker(), NetTracker(), MemTracker(), DskTracker())
 
-query = Query()
-trackers = all_trackers()
-for i in range(10):
-    print({str(tracker): tracker.track() for tracker in trackers})
-    time.sleep(2)
+# query = Query()
+# trackers = all_trackers()
+# for i in range(10):
+#     print({str(tracker): tracker.track() for tracker in trackers})
+#     time.sleep(2)

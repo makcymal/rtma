@@ -276,6 +276,7 @@ class QueryRepo:
         if query not in self.query_cnt:
             self.query_cnt[query] = 0
             logger.info(f"Got new query {query}, updating it on sensors...")
+        if self.query_cnt[query] == 0:
             aio.create_task(self.inject_query(query))
         self.query_cnt[query] += 1
 
