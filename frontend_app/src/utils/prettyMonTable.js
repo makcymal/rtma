@@ -17,7 +17,7 @@ export function formatHeaderOutput(headerData) {
         fields = fields.concat(Object.keys(headerData[key]))
         fieldsDataType = Object.assign({}, fieldsDataType, headerData[key])
     }
-    console.log(fieldsDataType)
+
     formattedData['clustered_fields'] = clusteredFields
     formattedData['clustered_fields_span'] = clusteredFieldsSpan
     formattedData['fields'] = fields

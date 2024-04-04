@@ -10,7 +10,7 @@ import { formatHeaderOutput, formatComputeNodeOutput, computeAvgTotalOutput} fro
 //     "stop" - stop subscription
 
 
-const URL = "ws://127.0.0.1:8082/echo";
+const URL = "ws://127.0.0.1:8082/ws";
 
 export const useMonitoringDataStore = defineStore('monitoringDataStore', {
     state: () => ({
@@ -21,7 +21,10 @@ export const useMonitoringDataStore = defineStore('monitoringDataStore', {
         serverMsgExt: [],
         serverMsgSpc: [],
         serverBatchesList: [],
-        avgTotalData: { "avg" : [], "total": []}
+        avgTotalData: { "avg" : [], "total": []},
+        serverTableHeaderExt: {},
+        currBatch: "",
+        currLabel: "",
       }),
     actions: {
         setSocket() {
@@ -36,11 +39,9 @@ export const useMonitoringDataStore = defineStore('monitoringDataStore', {
         listenMsg(){
           this.socket.addEventListener("message", (event) => {
             let parsed_data = JSON.parse(event.data)
+            console.log(parsed_data.header.split("!")[0])
             if (parsed_data.header.split("!")[0] === "spec"){ 
               this.serverMsgSpc = parsed_data;
-
-            } else if (parsed_data.header.split("!")[0] === "mext"){
-              this.serverMsgExt.push(parsed_data);
 
             } else if (parsed_data.header.split("!")[0] === "mstd"){
               let nodeMonitored = false
@@ -59,15 +60,22 @@ export const useMonitoringDataStore = defineStore('monitoringDataStore', {
             } else if (parsed_data.header.split("!")[0] === "head") {
               this.serverTableHeaderStd = formatHeaderOutput(parsed_data)
               this.serverMsgStd = []
-              this.serverMsgExt = []
               this.avgTotalData = { "avg" : [], "total": []}
 
             } else if (parsed_data.header.split("!")[0] === "lsob"){
               this.serverBatchesList = parsed_data.batches
               this.serverTableHeaderStd = {}
               this.serverMsgStd = []
-              this.serverMsgExt = []
               this.avgTotalData = { "avg" : [], "total": []}
+            }
+
+            if (parsed_data.header.split("!")[0] === "desc"){
+            delete parsed_data.header
+            this.serverTableHeaderExt = parsed_data
+            }
+            else if (parsed_data.header.split("!")[0] === "mext"){
+            console.log("aaaa", parsed_data)
+            this.serverMsgExt = parsed_data;
             }
             });
         }

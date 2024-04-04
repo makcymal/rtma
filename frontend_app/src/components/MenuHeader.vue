@@ -37,7 +37,7 @@ export default {
     ...mapActions(useMonitoringDataStore, ['sendMessage']),
   },
   mounted(){
-    console.log(this.userAuthenticated)
+    
   },
   methods: {
     logoutPush (){
