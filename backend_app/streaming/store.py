@@ -25,12 +25,12 @@ class ClientRepo:
 
     async def connect(self, ws: WebSocket):
         await ws.accept()
-        self._ls.add(ws)
-        logger.debug(f"Client {ws.client} established connection via WebSocket")
+        # self._ls.add(ws)
+        logger.info(f"Client {ws.client} established connection via WebSocket")
 
     def subscribe(self, ws: WebSocket, query: str):
         if self.queries.get(ws, None) == query:
-            logger.debug(f"Client {ws.client} is already subscribed to query {query}")
+            logger.info(f"Client {ws.client} is already subscribed to query {query}")
             return
 
         self.unsubscribe(ws)
@@ -40,31 +40,31 @@ class ClientRepo:
             self.subs[query] = set()
         self.subs[query].add(ws)
         queries.insert(query)
-        logger.debug(f"Client {ws.client} subscribed to query {query}")
+        logger.info(f"Client {ws.client} subscribed to query {query}")
 
     def notify(self, query: str, resp: dict):
         sub: WebSocket
         for sub in self.subs.get(query, []):
-            logger.debug(
+            logger.info(
                 f"Sending response {resp} to client {sub.client} on query {query}"
             )
             aio.create_task(sub.send_json(resp))
 
     def unsubscribe(self, ws: WebSocket):
         if ws not in self.queries:
-            logger.debug(f"Client {ws.client} is already unsubscribed")
+            logger.info(f"Client {ws.client} is already unsubscribed")
             return
 
         old_query = self.queries[ws]
         self.subs[self.queries[ws]].remove(ws)
         del self.queries[ws]
         queries.remove(old_query)
-        logger.debug(f"Client {ws.client} is unsubscribed from query {old_query}")
+        logger.info(f"Client {ws.client} is unsubscribed from query {old_query}")
 
     def disconnect(self, ws: WebSocket):
         self.unsubscribe(ws)
-        self._ls.remove(ws)
-        logger.debug(f"Client {ws.client} disconnected")
+        # self._ls.remove(ws)
+        logger.info(f"Client {ws.client} disconnected")
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,7 +98,7 @@ class SensorRepo:
             responses.add_batch(batch)
         self._ls[batch][label] = Sensor(reader, writer, specs)
         logger.info(f"Sensor {batch}!{label} established connection")
-        logger.debug(f"Sensor {batch}!{label} specs: {specs}")
+        logger.info(f"Sensor {batch}!{label} specs: {specs}")
 
     
     def get_specs(self, batch: str, label: str):
@@ -118,7 +118,7 @@ class ResponseRepo:
         logger.info(f"Got new batch {batch}")
 
     def insert(self, batch: str, label: str, resp: dict) -> str:
-        logger.debug(
+        logger.info(
             f"Sensor {batch}!{label} send response with header {resp['header']}"
         )
         proto, _batch, _label, mark, time = resp.pop("header").split("!")[:5]
@@ -126,13 +126,13 @@ class ResponseRepo:
         if mark == "std" or mark == "flb":
             header = f"mstd!{batch}!{label}!{time}"
             self.std[batch][label] = {"header": header, **resp}
-            logger.debug(f"Added mstd response from sensor {batch}!{label}")
+            logger.info(f"Added mstd response from sensor {batch}!{label}")
             return "std"
 
         elif mark == "ext":
             header = f"mext!{batch}!{label}!{time}"
             self.ext[batch][label] = {"header": header, **resp}
-            logger.debug(f"Added mext response from sensor {batch}!{label}")
+            logger.info(f"Added mext response from sensor {batch}!{label}")
 
             # someone monitoring the whole batch including current particular machine
             if batch in queries:
@@ -140,7 +140,7 @@ class ResponseRepo:
                     "header": header,
                     **self.standartise_response(batch, label, resp),
                 }
-                logger.debug(
+                logger.info(
                     f"There is batch {batch} in queries so added mstd response from sensor {batch}!{label}"
                 )
             return "ext"
@@ -170,10 +170,10 @@ class ResponseRepo:
 
     def send_last(self, mark: str, batch: str, label: str):
         if mark == "std":
-            logger.debug(f"Sending last mstd response from sensor {batch}!{label}")
+            logger.info(f"Sending last mstd response from sensor {batch}!{label}")
             clients.notify(batch, self.std[batch][label])
         elif mark == "ext":
-            logger.debug(f"Sending last mext response from sensor {batch}!{label}")
+            logger.info(f"Sending last mext response from sensor {batch}!{label}")
             clients.notify(
                 f"{batch}!{label}", self._flatten_ext(self.ext[batch][label])
             )
@@ -275,7 +275,7 @@ class QueryRepo:
         self.query_set.add(query)
         if query not in self.query_cnt:
             self.query_cnt[query] = 0
-            logger.debug(f"Got new query {query}, updating it on sensors...")
+            logger.info(f"Got new query {query}, updating it on sensors...")
             aio.create_task(self.inject_query(query))
         self.query_cnt[query] += 1
 
@@ -283,7 +283,7 @@ class QueryRepo:
         self.query_cnt[query] -= 1
         if self.query_cnt[query] == 0:
             self.query_set.remove(query)
-            logger.debug(f"Removed query {query}, updating it on sensors...")
+            logger.info(f"Removed query {query}, updating it on sensors...")
             aio.create_task(self.seize_query(query))
 
     async def inject_query(self, query: str):
@@ -296,14 +296,14 @@ class QueryRepo:
                     sensor: Sensor = sensors._ls[batch][label]
                     await sendall(self.std_str, sensor.writer)
                 else:
-                    logger.debug(
+                    logger.info(
                         f"Didn't inject std query {query} to sensor {batch}!{label} since it has ext query"
                     )
         else:
             batch, label = tokens[:2]
             sensor: Sensor = sensors._ls[batch][label]
             await sendall(self.ext_str, sensor.writer)
-            logger.debug(f"Injected ext query {query} to sensor {batch}!{label}")
+            logger.info(f"Injected ext query {query} to sensor {batch}!{label}")
 
     async def seize_query(self, query: str):
         tokens = query.split("!")
@@ -314,11 +314,11 @@ class QueryRepo:
                 if f"{batch}!{label}" not in self.query_set:
                     sensor: Sensor = sensors._ls[batch][label]
                     await sendall("stop", sensor.writer)
-                    logger.debug(
+                    logger.info(
                         f"Seized std query {query} from sensor {batch}!{label}"
                     )
                 else:
-                    logger.debug(
+                    logger.info(
                         f"Didn't seize query {query} from sensor {batch}!{label} since it has ext query"
                     )
         else:
@@ -326,12 +326,12 @@ class QueryRepo:
             sensor: Sensor = sensors._ls[batch][label]
             if batch in self.query_set:
                 await sendall(self.std_str, sensor.writer)
-                logger.debug(
+                logger.info(
                     f"Replaces ext query {query} with std on sensor {batch}!{label}"
                 )
             else:
                 await sendall("stop", sensor.writer)
-                logger.debug(f"Seized ext query {query} from sensor {batch}!{label}")
+                logger.info(f"Seized ext query {query} from sensor {batch}!{label}")
 
 
 clients = ClientRepo()

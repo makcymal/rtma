@@ -28,7 +28,7 @@ async def handle_client(ws: WebSocket):
     while True:
         try:
             msg = await ws.receive_text()
-            logger.debug(f"Client requests {msg}")
+            logger.info(f"Client requests {msg}")
 
             match msg[:4]:
                 case "lsob":
@@ -58,13 +58,13 @@ async def handle_client(ws: WebSocket):
 async def send_batches(ws: WebSocket):
     resp = {"header": "lsob", "batches": sensors.batches}
     await ws.send_json(resp)
-    logger.debug(f"Sent batches to client {ws.client}")
+    logger.info(f"Sent batches to client {ws.client}")
 
 
 async def send_spec(ws: WebSocket, batch: str, label: str):
     resp = {"header": f"spec!{batch}!{label}", **sensors.get_specs(batch, label)}
     await ws.send_json(resp)
-    logger.debug(f"Sent specs to client {ws.client}")
+    logger.info(f"Sent specs to client {ws.client}")
 
 
 with open("json/measures.standard.json", "r") as file:
@@ -76,10 +76,10 @@ with open("json/measures.extended.json", "r") as file:
 async def send_table_header(ws: WebSocket, batch: str):
     resp = {"header": f"head!{batch}", **measures_std}
     await ws.send_json(resp)
-    logger.debug(f"Sent table header to client {ws.client}")
+    logger.info(f"Sent table header to client {ws.client}")
 
 
 async def send_description(ws: WebSocket, batch: str, label: str):
     resp = {"header": f"desc!{batch}!{label}", **measures_ext}
     await ws.send_json(resp)
-    logger.debug(f"Sent description to client {ws.client}")
+    logger.info(f"Sent description to client {ws.client}")

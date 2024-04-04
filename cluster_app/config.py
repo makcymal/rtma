@@ -8,5 +8,5 @@ PORT_BACKEND = 42400
 BATCH = "gvr:knl"
 LABEL = socket.gethostname()
 ALWAYS_RECONNECT = True
-RECONNECT_DELAY = 10
+RECONNECT_DELAY = 3
 BACKEND_DISCONNECT_CODE = f"{secrets.randbits(32)}"

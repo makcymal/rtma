@@ -37,7 +37,7 @@ loggers:
       - uvicorn
     propagate: no
 root:
-  level: DEBUG
+  level: INFO
   handlers:
     - backend
   propagate: no

@@ -106,16 +106,21 @@ async def recv_queries():
         logger.debug("Enter reading query loop")
         try:
             if (qry_str := await recvall()) == config.BACKEND_DISCONNECT_CODE:
+                logger.debug("Received BACKEND_DISCONNECT_CODE, trying to reconnect")
                 await reconnect()
             if qry_str == "stop":
+                logger.debug("Got stop message, waiting for run_lock to acquire")
                 await run_lock.acquire()
+                logger.debug("run_lock acquired")
             else:
                 if run_lock.locked():
                     run_lock.release()
+                    logger.debug("Releasing run_lock")
                 logger.debug(f"New query: {qry_str}")
                 async with query_lock:
                     Query().update(qry_str)
         except ConnectionResetError:
+            logger.debug("WTF it's disconnected")
             await reconnect()
 
 
