@@ -33,6 +33,8 @@ class ClientRepo:
             logger.debug(f"Client {ws.client} is already subscribed to query {query}")
             return
 
+        self.unsubscribe(ws)
+
         self.queries[ws] = query
         if query not in self.subs:
             self.subs[query] = set()
@@ -279,8 +281,8 @@ class QueryRepo:
 
     async def inject_query(self, query: str):
         tokens = query.split("!")
-        if len(tokens) == 1:
 
+        if len(tokens) == 1:
             batch = query
             for label in sensors._ls[batch]:
                 if f"{batch}!{label}" not in self.query_set:
@@ -290,7 +292,6 @@ class QueryRepo:
                     logger.debug(
                         f"Didn't inject std query {query} to sensor {batch}!{label} since it has ext query"
                     )
-
         else:
             batch, label = tokens[:2]
             sensor: Sensor = sensors._ls[batch][label]
@@ -299,6 +300,7 @@ class QueryRepo:
 
     async def seize_qeury(self, query: str):
         tokens = query.split("!")
+        
         if len(tokens) == 1:
             batch = query
             for label in sensors._ls[batch]:
