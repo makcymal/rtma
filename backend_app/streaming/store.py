@@ -289,6 +289,7 @@ class QueryRepo:
 
     async def inject_query(self, query: str):
         tokens = query.split("!")
+        
 
         if len(tokens) == 1:
             batch = query
