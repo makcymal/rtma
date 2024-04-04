@@ -104,16 +104,19 @@ async def send_responses():
 async def recv_queries():
     while True:
         logger.debug("Enter reading query loop")
-        if (qry_str := await recvall()) == config.BACKEND_DISCONNECT_CODE:
+        try:
+            if (qry_str := await recvall()) == config.BACKEND_DISCONNECT_CODE:
+                await reconnect()
+            if qry_str == "stop":
+                await run_lock.acquire()
+            else:
+                if run_lock.locked():
+                    run_lock.release()
+                logger.debug(f"New query: {qry_str}")
+                async with query_lock:
+                    Query().update(qry_str)
+        except ConnectionResetError:
             await reconnect()
-        if qry_str == "stop":
-            await run_lock.acquire()
-        else:
-            if run_lock.locked():
-                run_lock.release()
-            logger.debug(f"New query: {qry_str}")
-            async with query_lock:
-                Query().update(qry_str)
 
 
 async def main():
@@ -133,7 +136,7 @@ async def main():
             )
         except OSError:
             await aio.sleep(config.RECONNECT_DELAY)
-        
+
     print(f"Connected {writer.get_extra_info('peername')}")
 
     # initializing singleton Query()

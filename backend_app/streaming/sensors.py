@@ -31,5 +31,5 @@ async def handle_sensor(reader: aio.StreamReader, writer: aio.StreamWriter):
         if (resp := await recvall(reader)) == PEER_DISCONNECTED:
             break
         # trigger sending resp to client
-        responses.insert(batch, label, json.loads(resp))
-        responses.send_last(batch, label)
+        mark = responses.insert(batch, label, json.loads(resp))
+        responses.send_last(mark, batch, label)

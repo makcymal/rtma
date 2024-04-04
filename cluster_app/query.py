@@ -49,6 +49,6 @@ class Query(Publisher, metaclass=Singleton):
         try:
             return self._qry[key]
         except Exception as err:
-            logger.error(f"Invalid order: unknown {str(err)} key")
-            logger.warning("Default order will be used")
+            logger.error(f"Invalid query: {str(err)}")
+            logger.warning("Default query will be used")
             self._qry = cp(self._default_qry)

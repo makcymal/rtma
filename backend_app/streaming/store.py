@@ -117,7 +117,7 @@ class ResponseRepo:
         self.ext[batch] = {}
         logger.info(f"Got new batch {batch}")
 
-    def insert(self, batch: str, label: str, resp: dict):
+    def insert(self, batch: str, label: str, resp: dict) -> str:
         logger.debug(
             f"Sensor {batch}!{label} send response with header {resp['header']}"
         )
@@ -127,6 +127,7 @@ class ResponseRepo:
             header = f"mstd!{batch}!{label}!{time}"
             self.std[batch][label] = {"header": header, **resp}
             logger.debug(f"Added mstd response from sensor {batch}!{label}")
+            return "std"
 
         elif mark == "ext":
             header = f"mext!{batch}!{label}!{time}"
@@ -142,6 +143,7 @@ class ResponseRepo:
                 logger.debug(
                     f"There is batch {batch} in queries so added mstd response from sensor {batch}!{label}"
                 )
+            return "ext"
 
     def _flatten_ext(self, resp: dict) -> dict:
         net = resp["net"]
@@ -166,10 +168,11 @@ class ResponseRepo:
         ]
         return resp
 
-    def send_last(self, batch: str, label: str):
-        logger.debug(f"Sending last mstd response from sensor {batch}!{label}")
-        clients.notify(batch, self.std[batch][label])
-        if label in self.ext[batch]:
+    def send_last(self, mark: str, batch: str, label: str):
+        if mark == "std":
+            logger.debug(f"Sending last mstd response from sensor {batch}!{label}")
+            clients.notify(batch, self.std[batch][label])
+        elif mark == "ext":
             logger.debug(f"Sending last mext response from sensor {batch}!{label}")
             clients.notify(
                 f"{batch}!{label}", self._flatten_ext(self.ext[batch][label])
@@ -302,7 +305,7 @@ class QueryRepo:
             await sendall(self.ext_str, sensor.writer)
             logger.debug(f"Injected ext query {query} to sensor {batch}!{label}")
 
-    async def seize_qeury(self, query: str):
+    async def seize_query(self, query: str):
         tokens = query.split("!")
         
         if len(tokens) == 1:

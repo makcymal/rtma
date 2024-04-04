@@ -51,7 +51,7 @@ async def handle_client(ws: WebSocket):
                 case "stop":
                     clients.unsubscribe(ws)
 
-        except WebSocketDisconnect:
+        except:
             clients.disconnect(ws)
 
 
