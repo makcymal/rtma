@@ -41,7 +41,7 @@ async def handle_client(ws: WebSocket):
                     clients.subscribe(ws, batch)
                 case "spec":
                     batch, label = msg.split("?")[1:3]
-                    await send_description(ws, batch, label)
+                    await send_spec(ws, batch, label)
                 case "desc":
                     batch, label = msg.split("?")[1:3]
                     await send_description(ws, batch, label)
@@ -59,6 +59,12 @@ async def send_batches(ws: WebSocket):
     resp = {"header": "lsob", "batches": sensors.batches}
     await ws.send_json(resp)
     logger.debug(f"Sent batches to client {ws.client}")
+
+
+async def send_spec(ws: WebSocket, batch: str, label: str):
+    resp = {"header": f"spec!{batch}!{label}", **sensors.get_specs(batch, label)}
+    await ws.send_json(resp)
+    logger.debug(f"Sent specs to client {ws.client}")
 
 
 with open("json/measures.standard.json", "r") as file:

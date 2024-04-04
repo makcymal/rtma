@@ -58,7 +58,7 @@ class ClientRepo:
         old_query = self.queries[ws]
         self.subs[self.queries[ws]].remove(ws)
         del self.queries[ws]
-        queries.remove(ws)
+        queries.remove(old_query)
         logger.debug(f"Client {ws.client} is unsubscribed from query {old_query}")
 
     def disconnect(self, ws: WebSocket):
@@ -99,6 +99,10 @@ class SensorRepo:
         self._ls[batch][label] = Sensor(reader, writer, specs)
         logger.info(f"Sensor {batch}!{label} established connection")
         logger.debug(f"Sensor {batch}!{label} specs: {specs}")
+
+    
+    def get_specs(self, batch: str, label: str):
+        return self._ls[batch][label].specs
 
 
 class ResponseRepo:
