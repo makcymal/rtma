@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { formatHeaderOutput, formatComputeNodeOutput, computeAvgTotalOutput} from "../utils/prettyMonTable"
+import { formatHeaderOutput, formatComputeNodeOutput } from "../utils/prettyMonTable"
 
 // Client can send one of the followings messages:
 //     "lsob" - get LiSt Of Batches
@@ -18,10 +18,9 @@ export const useMonitoringDataStore = defineStore('monitoringDataStore', {
         connectedToServer: false,
         serverMsgStd: [],
         serverTableHeaderStd: {},
-        serverMsgExt: [],
+        serverMsgExt: {},
         serverMsgSpc: [],
         serverBatchesList: [],
-        avgTotalData: { "avg" : [], "total": []},
         serverTableHeaderExt: {},
         currBatch: "",
         currLabel: "",
@@ -34,12 +33,13 @@ export const useMonitoringDataStore = defineStore('monitoringDataStore', {
         sendMessage(){
           return (msg) => {
           this.socket.send(msg);
+          // console.log(msg)
           }
         },
         listenMsg(){
           this.socket.addEventListener("message", (event) => {
             let parsed_data = JSON.parse(event.data)
-            console.log(parsed_data.header.split("!")[0])
+            // console.log(parsed_data.header.split("!")[0])
             if (parsed_data.header.split("!")[0] === "spec"){ 
               this.serverMsgSpc = parsed_data;
 
@@ -55,27 +55,21 @@ export const useMonitoringDataStore = defineStore('monitoringDataStore', {
               if (!nodeMonitored){
                 this.serverMsgStd.push(formatComputeNodeOutput(parsed_data))
               }
-              this.avgTotalData = computeAvgTotalOutput(this.serverTableHeaderStd, this.serverMsgStd)
 
             } else if (parsed_data.header.split("!")[0] === "head") {
               this.serverTableHeaderStd = formatHeaderOutput(parsed_data)
               this.serverMsgStd = []
-              this.avgTotalData = { "avg" : [], "total": []}
 
             } else if (parsed_data.header.split("!")[0] === "lsob"){
               this.serverBatchesList = parsed_data.batches
               this.serverTableHeaderStd = {}
               this.serverMsgStd = []
-              this.avgTotalData = { "avg" : [], "total": []}
-            }
-
-            if (parsed_data.header.split("!")[0] === "desc"){
-            delete parsed_data.header
-            this.serverTableHeaderExt = parsed_data
+            }else if (parsed_data.header.split("!")[0] === "desc"){
+              delete parsed_data.header
+              this.serverTableHeaderExt = parsed_data
             }
             else if (parsed_data.header.split("!")[0] === "mext"){
-            console.log("aaaa", parsed_data)
-            this.serverMsgExt = parsed_data;
+              this.serverMsgExt = parsed_data;
             }
             });
         }

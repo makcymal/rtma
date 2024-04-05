@@ -3,11 +3,11 @@
 
 
 
-    
+<div class="card shadow-sm m-auto" style="max-width: 22vw;">
 <main class="form-signin w-100 m-auto">
   <form @submit.prevent>
-    <h1 class="h3 mb-3 fw-normal text-center">Sign In</h1>
-
+    <h1 class="h3 mb-3 fw-normal text-center">Sing In</h1>
+    <span class="text-center" style="color: grey;">use your free-ipa account</span>
     <div class="form-floating">
       <input v-model="userLogin" type="text" class="form-control" id="floatingInput" placeholder="Login">
       <label for="floatingInput">Login</label>
@@ -20,16 +20,23 @@
     <button class="btn btn-primary w-100 py-2" type="submit" @click="loginBtnFunc">Sign in</button>
   </form>
 </main>
+</div>   
 </template>
 
 <script>
 import MenuHeader from '@/components/MenuHeader.vue'
 import axios from 'axios'
+import {useUserDataStore} from "@/stores/UserDataStore"
+import { mapStores, mapState} from "pinia";
 
 export default {
     name: "LoginPage",
     components: {
     MenuHeader
+  },
+  computed: {
+    ...mapStores(useUserDataStore),
+    ...mapState(useUserDataStore, ['userProfileData']),
   },
   data() {
     return {
