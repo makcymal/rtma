@@ -1,5 +1,5 @@
 <template>
-    <header class="head d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+    <header class="shadow-sm head d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
 
       <ul class="nav col text-start">
         <li><button type="button" class="btn btn-primary ms-2" @click="homePush">Home</button></li>
@@ -12,6 +12,7 @@
       </div>
 
       <div class="col text-end">
+        <button type="button" class="btn btn-primary me-2" @click="profilePush" v-if="this.userAuthenticated">Profile</button>
         <button type="button" class="btn btn-primary me-2" @click="logoutPush" v-if="this.userAuthenticated">Logout</button>
         <button type="button" class="btn btn-primary me-2" @click="loginPush" v-if="!this.userAuthenticated">Login</button>
         <!-- <button type="button" class="btn btn-primary">Sign-up</button> -->

@@ -16,13 +16,14 @@ export default {
     ...mapStores(useUserDataStore),
     ...mapActions(useMonitoringDataStore, ['setSocket', 'listenMsg']),
     ...mapState(useUserDataStore, ['userAuthenticated']),
-    ...mapWritableState(useUserDataStore, ['userAuthenticated']),
+    ...mapWritableState(useUserDataStore, ['userAuthenticated', 'userProfileData']),
   },
   mounted() {
     axios.get(axios.defaults.baseURL + "check-cookie-login", { withCredentials: true })
     .then((response) => {
             if(response.data.status === "OK"){
               this.userAuthenticated = true
+              this.userProfileData = response.data.data
               this.setSocket;
               this.listenMsg;
               

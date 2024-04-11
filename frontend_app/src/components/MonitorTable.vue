@@ -18,12 +18,13 @@
          </thead>
       </table>
    </div>
-   <div class="table-responsive hide-scroll p-2 custom-table" style="max-height: 500px; margin: 0 !important; padding: 0 !important;">
+   <div class="table-responsive hide-scroll p-2 custom-table" style="max-height: 400px; margin: 0 !important; padding: 0 !important;">
      <table class="table-bordered" style="margin: 0 !important; padding: 0 !important;">
        <tbody>
          <tr v-for="(compNode, nodeIndex) in serverMsg" v-bind:key="nodeIndex" :style="{backgroundColor: zebraTableColor(nodeIndex)}">
             <td>{{ nodeIndex + 1 }}</td>
             <td v-if="!('name' in compNode)">thread{{ nodeIndex + 1 }}</td>
+            <td v-else-if="!extDataOnName"> {{ compNode.name }}</td>
             <td v-else><button class="name-link btn btn-link" @click="showExtendedData(compNode.name)">{{ compNode.name }}</button></td>
             <td v-for="(fieldName, index) in serverTableHeader.fields" v-bind:key="index"> {{ compNode[fieldName] }} {{ serverTableHeader.fields_data_type[fieldName] }}</td>
          </tr>
@@ -34,13 +35,20 @@
    <table class="table-bordered footer-table">
          <tfoot>
             <tr class="footer-cell">
-               <!-- заменить на td -->
+
                <th class="colspan-cell">AVERAGE</th> 
-               <td v-for="(avgFieldName, avgIndex) in serverTableHeader.fields" v-bind:key="avgIndex">{{ avgTotalData.avg[avgFieldName] }} {{ serverTableHeader.fields_data_type[avgFieldName] }}</td>
+               <template v-for="(avgFieldName, avgIndex) in serverTableHeader.fields" v-bind:key="avgIndex">
+                  <td v-if="avgTotalData.avg[avgFieldName] !== '-'"> {{ avgTotalData.avg[avgFieldName] }} {{ serverTableHeader.fields_data_type[avgFieldName] }} </td>
+                  <td v-else> {{ avgTotalData.avg[avgFieldName] }} </td>
+               </template>
+            
             </tr>
             <tr class="footer-cell">
                <th class="colspan-cell"> TOTAL</th>
-               <td v-for="(totalFieldName, totalIndex) in serverTableHeader.fields" v-bind:key="totalIndex"> {{ avgTotalData.total[totalFieldName] }} {{ serverTableHeader.fields_data_type[totalFieldName] }}</td>
+               <template v-for="(totalFieldName, totalIndex) in serverTableHeader.fields" v-bind:key="totalIndex">
+                  <td v-if="avgTotalData.total[totalFieldName] !== '-'"> {{ avgTotalData.total[totalFieldName] }} {{ serverTableHeader.fields_data_type[totalFieldName] }} </td>
+                  <td v-else> {{ avgTotalData.total[totalFieldName] }} </td>
+               </template>
             </tr>
          </tfoot>
       </table>
@@ -52,6 +60,7 @@
 <script>
 import { useMonitoringDataStore } from "@/stores/MonitoringDataStore"
 import { mapStores, mapWritableState } from "pinia";
+import { computeAvgTotalOutput } from '../utils/prettyMonTable'
 
 export default {
    name: "MonitorTable",
@@ -60,10 +69,13 @@ export default {
       }
    },
    computed: {
+      avgTotalData (){
+       return computeAvgTotalOutput(this.serverTableHeader['fields'], this.serverTableHeader['fields_data_type'], this.serverMsg)
+      },
       ...mapStores(useMonitoringDataStore),
       ...mapWritableState(useMonitoringDataStore, ['currBatch', 'currLabel'])
    },
-   props: ['serverTableHeader', 'serverMsg', 'avgTotalData', 'extDataOnName'],
+   props: ['serverTableHeader', 'serverMsg', 'extDataOnName'],
    methods: {
       zebraTableColor(index){
          if (index % 2){
@@ -91,14 +103,14 @@ export default {
    }
 
    .footer-cell {
-      background-color: rgb(241, 232, 232);
+      background-color: rgb(234, 201, 201);
    }
 
    /* .footer-table {
 
    } */
    .colspan-cell {
-      min-width: 10vw;
+      min-width: 12vw;
    }
 
    .header-table {
@@ -118,25 +130,28 @@ export default {
    }
 
    th {
-      min-width: 5vw;
-      max-width: 5vw;
+      min-width: 6vw;
+      max-width: 6vw;
       height: 5vh;
       text-align: center; 
       vertical-align: middle;
+      word-break: break-all;
    }
 
    td {
-      min-width: 5vw;
-      max-width: 5vw;
+      min-width: 6vw;
+      max-width: 6vw;
       height: 5vh;
       text-align: center; 
       vertical-align: middle;
+      word-break: break-all;
    }
    .name-link {
       margin: 0px;
       padding: 0px;
       min-width: 5vw;
       max-width: 5vw;
+      word-break: break-all;
    }
 
    .hide-scroll {

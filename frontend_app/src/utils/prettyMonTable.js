@@ -18,6 +18,7 @@ export function formatHeaderOutput(headerData) {
         fieldsDataType = Object.assign({}, fieldsDataType, headerData[key])
     }
 
+    formattedData['original_data'] = headerData
     formattedData['clustered_fields'] = clusteredFields
     formattedData['clustered_fields_span'] = clusteredFieldsSpan
     formattedData['fields'] = fields
@@ -37,9 +38,8 @@ export function formatComputeNodeOutput(computeNodesData) {
     return formattedData
 }
 
-export function computeAvgTotalOutput(tableHeader, nodesData) {
+export function computeAvgTotalOutput(fields, fields_data_type, nodesData) {
     let formattedData = {}
-    let fields = tableHeader.fields
     let avg = {}
     let total = {}
     for (var field of fields){
@@ -51,13 +51,13 @@ export function computeAvgTotalOutput(tableHeader, nodesData) {
                 count++
             }
         }
-        if (count > 0) {
+        if (count > 0 && fields_data_type[field] !== 'hz') {
             avg[field] = Math.round(data / count, 2)
         } else {
-            avg[field] = "-"
+            avg[field] = '-'
         }
-        if (tableHeader.fields_data_type[field] === "%" || tableHeader.fields_data_type[field] === "Hz"){
-            total[field] = "-"
+        if (fields_data_type[field] === "%" || fields_data_type[field] === "hz"){
+            total[field] = '-'
         } else {
             total[field] = Math.round(data, 2)
         }

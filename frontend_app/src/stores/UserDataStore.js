@@ -4,7 +4,8 @@ import { defineStore } from "pinia";
 
 export const useUserDataStore = defineStore('userDataStore', {
     state: () => ({
-        userAuthenticated: false
+        userAuthenticated: false,
+        userProfileData: {}
     }),
     persist: {
         enabled: true,
