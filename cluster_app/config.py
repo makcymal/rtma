@@ -2,7 +2,8 @@ import socket
 import secrets
 
 
-HOST_BACKEND = "159.93.32.219"
+DEBUG = False
+HOST_BACKEND = "159.93.35.180"
 PORT_BACKEND = 42400
 # нельзя использовать !? в названии
 BATCH = "gvr:knl"

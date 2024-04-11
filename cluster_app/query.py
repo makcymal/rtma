@@ -1,8 +1,10 @@
 import os
 import json
 import logging
+import pathlib
 from copy import deepcopy as cp
 from utils import Publisher, Singleton
+import config
 
 
 logger = logging.getLogger(__name__)
@@ -25,8 +27,11 @@ class Query(Publisher, metaclass=Singleton):
 
         self.qryfile = os.path.join(os.path.dirname(__file__), "query.fallback.json")
 
-        if os.environ.get("RTMA_SENSOR") is not None:
-            self.logfile = "/var/log/rtma/rtma-sensor.log"
+        if not config.DEBUG:
+            # self.logfile = "/var/log/rtma/rtma-sensor.log"
+            self.logfile = f"log/sensor!{config.BATCH}!{config.LABEL}.log"
+            with open(self.logfile, "w"):
+                pass
             self.debug = False
             self.loglevel = logging.INFO
         else:

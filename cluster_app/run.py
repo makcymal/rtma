@@ -1,4 +1,7 @@
+#!/home/makcymal/miniconda3/envs/web/bin/python
+
 import os
+import pathlib
 import sys
 import time
 import json
@@ -104,7 +107,7 @@ async def send_responses_wrapper():
 async def recv_queries():
     conn = Conn()
     query = Query()
-    
+
     while True:
         logger.info("Ready to receive queries")
         qry_str = await conn.recvall()
@@ -121,23 +124,22 @@ async def recv_queries_wrapper():
     except CancelledError:
         logger.info("send_responses cancelled")
 
+
 async def main():
+    if len(sys.argv) >= 2:
+        config.BATCH = sys.argv[1]
+    if len(sys.argv) >= 3:
+        config.LABEL = sys.argv[2]
+
     query = Query()
-    
-    if os.path.exists("sensor.log"):
-        os.remove("sensor.log")
-    
+
     logging.basicConfig(
         filename=query.logfile,
         level=query.loglevel,
         format="%(levelname)s:%(asctime)s - %(module)s:%(lineno)s - %(message)s",
         datefmt="%H:%M:%S",
     )
-    
-    if len(sys.argv) >= 2:
-        config.BATCH = sys.argv[1]
-    if len(sys.argv) >= 3:
-        config.LABEL = sys.argv[2]
+
     logger.info(f"Current machine is: {config.BATCH}!{config.LABEL}")
 
     conn = Conn()
