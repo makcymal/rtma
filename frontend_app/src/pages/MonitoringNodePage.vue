@@ -1,7 +1,7 @@
 <template>
     <MenuHeader></MenuHeader>
     <div class="card shadow m-auto" style="width: 25vw;">
-    <button class="btn btn-light text-center" @click="showSpec"><h2>«{{ this.currLabel }}» node specs</h2></button>
+    <button class="btn btn-light text-center" @click="showSpec"><h2>«{{ this.currLabel }}»</h2></button>
     <template v-if="specVisible">
     <div class="card shadow m-auto" style="width: 25vw;">
           <h4 class="h4 mb-3 fw-normal text-center">INFO</h4>
@@ -17,11 +17,23 @@
           </template>
         </div>
     </template>
-  </template>
+      </template>
     </div>
+    <div class="d-flex flex-column" style="align-items: center; padding: 0.7%;">
+    <div class="d-flex flex-row card shadow-sm">
+        <template v-for="(key, index) in getTableNames()" v-bind:key="index">
+        <div class="d-flex flex-column justify-content-center align-items-center">
+          <button class="btn" type="button" role="tab" @click="setActiveSectionTable(index)">{{key}}</button>
+          <div :style="{width: '1vw', height: '0.5vh', backgroundColor: 'blue'}"  class="rounded-pill indicator-active" v-if="index == currSectionId"></div>
+        </div>
+      </template>
+    </div>
+    </div>
+
+
     <div class="d-flex flex-column" style="align-items: center;" v-if="Object.keys(serverMsgExt).length > 0">
-      <div class="p2" v-for="(key, index) in Object.keys(serverTableHeaderExt)" v-bind:key="index" style="margin: 10px;">
-        <MonitorTable :server-msg="serverMsgExt[key]" :server-table-header="formatHeader(serverTableHeaderExt[key], key)" :ext-data-on-name="false" ></MonitorTable>
+      <div class="p2" style="margin: 10px;">
+        <MonitorTable :server-msg="serverMsgExt[Object.keys(serverTableHeaderExt)[currSectionId]]" :server-table-header="formatHeader(serverTableHeaderExt[Object.keys(serverTableHeaderExt)[currSectionId]], Object.keys(serverTableHeaderExt)[currSectionId])" :ext-data-on-name="false" ></MonitorTable>
       </div>
     </div>
     <div class="container text-center" v-else><h2>Waiting sensor response...</h2></div>
@@ -41,7 +53,11 @@ export default {
   },
   data() {
     return {
-      specVisible: true
+      specVisible: false,
+
+      chartBtnColor: 'blue',
+      tableBtnColor: 'white',
+      currSectionId: 0,
     }
   },
    computed: {
@@ -66,13 +82,66 @@ export default {
       }, 
       showSpec (){
         this.specVisible = !this.specVisible
+      },
+      getTableNames (){
+        if (this.currSectionId === -1){
+          this.setActiveSectionTable(0)
+        }
+        return Object.keys(this.serverTableHeaderExt)
+      },
+      setActiveSectionTable (index){
+        this.currSectionId = index
+      }
    }
-  }
-
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+label, #slider {
+  display: inline-block;
+  font-weight: bold;
+  text-align: center;
+  background: purple;
+  color: #AAA;
+  width: 150px;
+  height: auto;
+  padding: 20px 0px;
+}
 
+.indicator{
+  width: '1vw' !important; 
+  height: '0.5vh' !important;
+  background-color: "white" !important;
+}
+
+.indicator-active{
+  width: '1vw'  !important; 
+  height: '0.5vh' !important;
+  background-color: "blue" !important;
+}
+
+
+
+label:hover {
+  color: white;
+  cursor: pointer;
+}
+
+#slider {
+  background-color: transparent;
+  position: absolute;
+  border-bottom: 3px solid white;
+  margin: 7px 10px;
+  transition: transform 0.5s;
+  width: 130px;
+}
+
+[type=radio],#r1:checked ~ #slider {
+  transform: translate(-450px, 0px);
+}
+
+[type=radio],#r2:checked ~ #slider {
+  transform: translate(-300px, 0px);
+}
 </style>

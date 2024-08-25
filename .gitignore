@@ -338,3 +338,11 @@ log
 logs
 
 # End of https://www.toptal.com/developers/gitignore/api/python,vuejs,redis,visualstudiocode,pycharm
+nvid.py
+.idea/.gitignore
+.idea/misc.xml
+.idea/modules.xml
+.idea/rtma.iml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
+cluster_app/scriptt.ps1

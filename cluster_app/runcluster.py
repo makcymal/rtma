@@ -15,7 +15,7 @@ from trackers import all_trackers
 from utils import Singleton
 import config
 
-
+print(1)
 CONN_ERROR = (OSError, BrokenPipeError, ConnectionResetError)
 query_lock = aio.Lock()
 logger = logging.getLogger(__name__)

@@ -6,7 +6,7 @@ from random import choice
 
 if __name__ == "__main__":
     sensors = []
-    N = 50
+    N = 20
 
     batches = [
         rn.get_name(adj=("size", "materials"), noun=("infrastructure",))
@@ -23,6 +23,6 @@ if __name__ == "__main__":
         for i in range(N):
             batch = choice(batches)
             label = labels[i]
-            sp = subprocess.Popen(["./run.py", batch, label])
+            subprocess.call(["D:/Projects/rtma/.venv/Scripts/python.exe", "runcluster.py",  batch, label])
             print(f"{batch}!{label} is running with pid {sp.pid}", file=log)
     

@@ -207,7 +207,7 @@ class NetTracker(Tracker):
 # отслеживание мемов в паблике караси БЕСПЛАТНО
 class MemTracker(Tracker):
 
-    VALID_FIELDS = set(("used", "buffers", "cached", "shared", "swap"))
+    VALID_FIELDS = set(("used", "buffers", "shared", "swap"))
 
     def __str__(self):
         return "mem"

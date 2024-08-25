@@ -2,19 +2,19 @@
     <header class="shadow-sm head d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
 
       <ul class="nav col text-start">
-        <li><button type="button" class="btn btn-primary ms-2" @click="homePush">Home</button></li>
-        <li><button type="button" class="btn btn-primary me-2 ms-2" @click="monitoringPush">Monitoring</button></li>
-        <li><button type="button" class="btn btn-primary me-2" @click="analiticsPush">Statistics</button></li>
+        <li><button type="button" class="btn btn-primary ms-2 nav-button" @click="homePush">Home</button></li>
+        <li><button type="button" class="btn btn-primary me-2 ms-2 nav-button" @click="monitoringPush">Monitoring</button></li>
+        <li><button type="button" class="btn btn-primary me-2 nav-button" @click="analiticsPush">Statistics</button></li>
       </ul>
 
       <div class="col text-center">
-          <h3>Resources & Traffic Monitoring</h3>
+          <h2 style="color: #000046;">Resources & Traffic Monitoring</h2>
       </div>
 
       <div class="col text-end">
-        <button type="button" class="btn btn-primary me-2" @click="profilePush" v-if="this.userAuthenticated">Profile</button>
-        <button type="button" class="btn btn-primary me-2" @click="logoutPush" v-if="this.userAuthenticated">Logout</button>
-        <button type="button" class="btn btn-primary me-2" @click="loginPush" v-if="!this.userAuthenticated">Login</button>
+        <button type="button" class="btn btn-primary me-2 nav-button" @click="profilePush" v-if="this.userAuthenticated">Profile</button>
+        <button type="button" class="btn btn-primary me-2 nav-button" @click="logoutPush" v-if="this.userAuthenticated">Logout</button>
+        <button type="button" class="btn btn-primary me-2 nav-button" @click="loginPush" v-if="!this.userAuthenticated">Login</button>
         <!-- <button type="button" class="btn btn-primary">Sign-up</button> -->
       </div>
     </header>
@@ -81,7 +81,11 @@ export default {
   <!-- Add "scoped" attribute to limit CSS to this component only -->
   <style scoped>
  .head {
-  background-color: #37c6e0
+  background-color: #01B0F1
+ }
+
+ .nav-button {
+  background-color: #000046;
  }
   </style>
   

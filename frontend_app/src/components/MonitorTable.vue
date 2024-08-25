@@ -1,4 +1,5 @@
 <template>
+   <h4 class="hint">body part of a table is scrollable</h4>
    <div class="d-flex flex-column" style="margin: 0 !important; padding: 0 !important; align-items: center;">
       <div class="p-2" style="margin: 0 !important; padding: 0 !important;">
       <table class="table-bordered header-table">
@@ -18,15 +19,18 @@
          </thead>
       </table>
    </div>
-   <div class="table-responsive hide-scroll p-2 custom-table" style="max-height: 400px; margin: 0 !important; padding: 0 !important;">
-     <table class="table-bordered" style="margin: 0 !important; padding: 0 !important;">
+   <div class="table-responsive hide-scroll p-2 inner-shadow" style="max-height: 400px; margin: 0 !important; padding: 0 !important;">
+     <table class="table-bordered">
        <tbody>
          <tr v-for="(compNode, nodeIndex) in serverMsg" v-bind:key="nodeIndex" :style="{backgroundColor: zebraTableColor(nodeIndex)}">
             <td>{{ nodeIndex + 1 }}</td>
-            <td v-if="!('name' in compNode)">thread{{ nodeIndex + 1 }}</td>
+            <td v-if="!('name' in compNode)">
+               thread{{ nodeIndex + 1 }}
+            </td>
             <td v-else-if="!extDataOnName"> {{ compNode.name }}</td>
             <td v-else><button class="name-link btn btn-link" @click="showExtendedData(compNode.name)">{{ compNode.name }}</button></td>
-            <td v-for="(fieldName, index) in serverTableHeader.fields" v-bind:key="index"> {{ compNode[fieldName] }} {{ serverTableHeader.fields_data_type[fieldName] }}</td>
+            <td v-for="(fieldName, index) in serverTableHeader.fields" v-bind:key="index"> {{ compNode[fieldName] }} {{ serverTableHeader.fields_data_type[fieldName] }}
+            </td>
          </tr>
        </tbody>
      </table>
@@ -66,6 +70,7 @@ export default {
    name: "MonitorTable",
    data() {
       return {
+         isRendered: false
       }
    },
    computed: {
@@ -118,7 +123,7 @@ export default {
       border-radius: 1px;
    }
 
-   .custom-table {
+   .inner-shadow {
       -webkit-box-shadow: inset 0px 0px 3px 1px rgba(41,49,51,1);
       -moz-box-shadow: inset 0px 0px 3px 1px rgba(41,49,51,1);
       box-shadow: inset 0px 0px 3px 1px rgba(41,49,51,1);
@@ -153,6 +158,13 @@ export default {
       max-width: 5vw;
       word-break: break-all;
    }
+
+   .hint {
+      text-align: center;
+      color: gray;
+      font-size: large;
+   }
+
 
    .hide-scroll {
       scrollbar-width: none;
