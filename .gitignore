@@ -346,3 +346,4 @@ nvid.py
 .idea/vcs.xml
 .idea/inspectionProfiles/profiles_settings.xml
 cluster_app/scriptt.ps1
+frontend_app/src/serverConfig.js

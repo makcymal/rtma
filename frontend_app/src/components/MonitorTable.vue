@@ -29,8 +29,10 @@
             </td>
             <td v-else-if="!extDataOnName"> {{ compNode.name }}</td>
             <td v-else><button class="name-link btn btn-link" @click="showExtendedData(compNode.name)">{{ compNode.name }}</button></td>
-            <td v-for="(fieldName, index) in serverTableHeader.fields" v-bind:key="index"> {{ compNode[fieldName] }} {{ serverTableHeader.fields_data_type[fieldName] }}
-            </td>
+            <template v-for="(fieldName, index) in serverTableHeader.fields" v-bind:key="index">
+               <td v-if="(isNaN(compNode[fieldName]) || ['', ' ', ' '].indexOf(compNode[fieldName]) != -1)">-</td>
+               <td v-else :style="getIndicatorStyleObject(serverTableHeader.fields_data_type[fieldName], compNode[fieldName])">{{ compNode[fieldName] }} {{ serverTableHeader.fields_data_type[fieldName] }}</td>
+            </template>
          </tr>
        </tbody>
      </table>
@@ -92,6 +94,16 @@ export default {
       showExtendedData(nodeLabel){
          this.currLabel = nodeLabel
          this.$router.push('/monitoring/node')
+      },
+      getIndicatorStyleObject(datatype, data){
+         let styleObject
+         if (datatype === '%'){
+            data = Math.max(data / 100 - 0.25, 0)
+            styleObject = {backgroundColor: `rgba(255, 207, 64, ${data})`}
+         } else {
+            styleObject = {backgroundColor: `rgba(255, 207, 64, 0)`}
+         }
+         return styleObject
       }
    }
 }
@@ -164,7 +176,6 @@ export default {
       color: gray;
       font-size: large;
    }
-
 
    .hide-scroll {
       scrollbar-width: none;

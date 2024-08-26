@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { formatHeaderOutput, formatComputeNodeOutput } from "../utils/prettyMonTable"
 
+import { baseAddr, basePort }  from '../serverConfig'
+
 // Client can send one of the followings messages:
 //     "lsob" - get LiSt Of Batches
 //     "head?BATCH" - get table HEADer for BATCH
@@ -9,8 +11,7 @@ import { formatHeaderOutput, formatComputeNodeOutput } from "../utils/prettyMonT
 //     "mext?BATCH?LABEL" - EXTended Monitoring to machine with LABEL in BATCH
 //     "stop" - stop subscription
 
-
-const URL = "ws://127.0.0.1:8082/ws";
+const URL = "ws://" + baseAddr + basePort + "/ws"
 
 export const useMonitoringDataStore = defineStore('monitoringDataStore', {
     state: () => ({

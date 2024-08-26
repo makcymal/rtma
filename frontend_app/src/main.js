@@ -7,11 +7,13 @@ import { createPinia } from "pinia"
 import { createApp } from 'vue'
 import App from './App.vue'
 
+import { baseProtocol, baseAddr, basePort }  from './serverConfig'
+
 const pinia = createPinia();
 
 axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
-axios.defaults.baseURL = "http://127.0.0.1:8082/";
+axios.defaults.baseURL = baseProtocol + baseAddr + basePort + '/';
 
 createApp(App).use(pinia).use(router).mount('#app')
 

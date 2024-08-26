@@ -1,11 +1,16 @@
 <template>
-   <div class="card shadow text-center chart-card">
+   <div class="card shadow text-center chart-card align-items-center">
       <h3>{{ this.clusterLabel }}, {{ this.getChartDataType() }}</h3>
       <Pie
       id="my-chart-id"
       :options="chartOptions"
       :data="chartData"
+      :key="sliced"
    />
+   <div class="d-flex align-items-center form-check form-switch justify-content-center">
+      <input class="form-check-input mx-1" type="checkbox" role="switch" id="flexSwitchCheckbox" v-on:input="sliceChart">
+      <label class="form-check-label mx-1" for="flexSwitchCheckbox">Sliced</label>
+   </div>
    </div>
 </template>
    
@@ -23,8 +28,12 @@ export default {
   props: ['clusterLabel', 'serverData', 'serverFields', 'serverFieldsDataType'],
   data() {
     return {
+      sliced: false, 
       chartOptions: {
-        responsive: true
+        responsive: true,
+        borderAlign: 'center',
+        offset: 0,
+        radius: '70%'
       }
     }
   },
@@ -76,16 +85,42 @@ export default {
          newData[items[i][0]] = items[i][1]
       }
          return newData
+   },
+   sliceChart (){
+      this.sliced = !this.sliced
+      if (this.sliced){
+         this.chartOptions.offset = 45
+      } else{
+         this.chartOptions.offset = 0
+      }
    }
   }
 }
 </script>
    
    
-<style>
+<style scoped> 
  .chart-card {
    width: 23vw; 
    padding-bottom: 2vh; 
    padding-top: 2vh;
  }
+
+ input[type=checkbox]
+{
+  /* Double-sized Checkboxes */
+  -ms-transform: scale(1.7); /* IE */
+  -moz-transform: scale(1.7); /* FF */
+  -webkit-transform: scale(1.7); /* Safari and Chrome */
+  -o-transform: scale(1.7); /* Opera */
+  transform: scale(1.7);
+  padding: 5px;
+}
+
+label[for=flexSwitchCheckbox]
+{
+   padding-left: 20%;
+   font-size: 115%;
+}
+
 </style>

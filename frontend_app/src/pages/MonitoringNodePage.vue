@@ -30,13 +30,17 @@
     </div>
     </div>
 
-
     <div class="d-flex flex-column" style="align-items: center;" v-if="Object.keys(serverMsgExt).length > 0">
       <div class="p2" style="margin: 10px;">
         <MonitorTable :server-msg="serverMsgExt[Object.keys(serverTableHeaderExt)[currSectionId]]" :server-table-header="formatHeader(serverTableHeaderExt[Object.keys(serverTableHeaderExt)[currSectionId]], Object.keys(serverTableHeaderExt)[currSectionId])" :ext-data-on-name="false" ></MonitorTable>
       </div>
     </div>
-    <div class="container text-center" v-else><h2>Waiting sensor response...</h2></div>
+    <div class="container text-center" v-else>
+      <div>
+        <div class="spinner-border text-dark align-items-end" role="status" aria-hidden="true"></div>
+        <h2><strong>Waiting for sensor response...</strong></h2>
+      </div>
+    </div>
 </template>
 
 <script>
