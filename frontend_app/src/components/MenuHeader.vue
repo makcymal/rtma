@@ -3,8 +3,8 @@
 
       <ul class="nav col text-start">
         <li><button type="button" class="btn btn-primary ms-2 nav-button" @click="homePush">Home</button></li>
-        <li><button type="button" class="btn btn-primary me-2 ms-2 nav-button" @click="monitoringPush">Monitoring</button></li>
-        <li><button type="button" class="btn btn-primary me-2 nav-button" @click="analiticsPush">Statistics</button></li>
+        <li><button type="button" class="btn btn-primary ms-2 nav-button" @click="monitoringPush">Monitoring</button></li>
+        <li><button type="button" class="btn btn-primary me-2 ms-2 nav-button" @click="analiticsPush">Statistics</button></li>
       </ul>
 
       <div class="col text-center">
