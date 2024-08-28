@@ -347,3 +347,4 @@ nvid.py
 .idea/inspectionProfiles/profiles_settings.xml
 cluster_app/scriptt.ps1
 frontend_app/src/serverConfig.js
+/backend_app/freeipa-test.py

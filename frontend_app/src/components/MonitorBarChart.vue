@@ -1,51 +1,54 @@
 <template>
    <div class="card shadow text-center chart-card align-items-center">
       <h3>{{ this.clusterLabel }}, {{ this.getChartDataType() }}</h3>
-      <Pie
-      id="my-chart-id"
+      <Bar
+      id="my--bar-chart-id"
       :options="chartOptions"
       :data="chartData"
-      :key="sliced"
+      :key="inverted"
    />
    <div class="d-flex align-items-center form-check form-switch justify-content-center">
-      <input class="form-check-input mx-1" type="checkbox" role="switch" id="flexSwitchCheckbox" v-on:input="sliceChart">
-      <label class="form-check-label mx-1" for="flexSwitchCheckbox">Sliced</label>
+      <input class="form-check-input mx-1" type="checkbox" role="switch" id="flexSwitchCheckbox" v-on:input="invertChart">
+      <label class="form-check-label mx-1" for="flexSwitchCheckbox">Inverted</label>
    </div>
    </div>
 </template>
    
 
 <script>
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-import { Pie } from 'vue-chartjs'
+import { Chart as ChartJS, Tooltip, Legend, CategoryScale, LinearScale,  BarElement } from 'chart.js'
+import { Bar } from 'vue-chartjs'
 import { computeAvgTotalOutput } from '../utils/prettyMonTable'
 
-ChartJS.register(ArcElement, Tooltip, Legend)
+ChartJS.register(Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
 export default {
-  name: 'MonitorChart',
-  components: { Pie },
+  name: 'MonitorBarChart',
+  components: { Bar },
   props: ['clusterLabel', 'serverData', 'serverFields', 'serverFieldsDataType'],
   data() {
     return {
-      sliced: false, 
+      inverted: false,
       chartOptions: {
-        responsive: true,
-        borderAlign: 'center',
-        offset: 0,
-        radius: '70%'
+         indexAxis: 'x',
+         responsive: true,
+         plugins: {
+            legend: {
+            display: false
+            }
+            }
+         }
       }
-    }
-  },
+   },
   computed: {
    chartData () {
         return {datasets: [ { data: Object.values(this.transformData(computeAvgTotalOutput(this.serverFields, this.serverFieldsDataType, this.serverData).avg)),
 
          backgroundColor: ['#669900', '#ccee66', '#006699', '#3399cc', '#990066', '#cc3399',
-         '#ff6600', '#ffcc00', '#bce3fa', '#cb0b0a'], } ],
+         '#ff6600', '#ffcc00', '#bce3fa', '#cb0b0a'] } ],
 
          labels: Object.keys(this.transformData(computeAvgTotalOutput(this.serverFields, this.serverFieldsDataType, this.serverData).avg)) }
-   }
+      }
    },
   methods: {
    transformData (inputData) {
@@ -86,12 +89,12 @@ export default {
       }
          return newData
    },
-   sliceChart (){
-      this.sliced = !this.sliced
-      if (this.sliced){
-         this.chartOptions.offset = 45
+   invertChart (){
+      this.inverted = !this.inverted
+      if (this.inverted){
+         this.chartOptions.indexAxis = 'y'
       } else{
-         this.chartOptions.offset = 0
+         this.chartOptions.indexAxis = 'x'
       }
    }
   }
