@@ -8,7 +8,7 @@
       </ul>
 
       <div class="col text-center">
-          <h2 style="color: #000046;">Resources & Traffic Monitoring</h2>
+          <h2 style="color: #000046; font-family: 'Georgia';">Resources & Traffic Monitoring</h2>
       </div>
 
       <div class="col text-end">
