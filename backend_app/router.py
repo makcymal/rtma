@@ -96,7 +96,7 @@ def get_data_from_jwt_cookie(request: Request):
     return public_user_data
 
 
-@router.get("/check-cookie-login")
+@router.get("/api/check-cookie-login")
 async def check_cookie_login(user_data: dict = Depends(get_data_from_jwt_cookie)):
     logger.info("GET: /check-cookie-login")
     logger.info(f"Client {user_data['name']} checked cookie login")

@@ -1,19 +1,26 @@
-FROM python:latest
+# Используем Node.js в качестве базового образа для сборки frontend
+FROM node:16 AS frontend-builder
+WORKDIR /app
+COPY frontend /app
+RUN npm install
+RUN npm run build
 
-RUN mkdir -p /home/sensor/cluster_app && \ 
-    useradd -d /home/sensor sensor
+# Используем Python и FastAPI в качестве базового образа для API backend
+FROM tiangolo/uvicorn-gunicorn-fastapi:latest AS backend
+WORKDIR /app
+COPY backend /app
 
-SHELL [ "/bin/bash" ]
+# Копируем собранные файлы frontend в Nginx
+FROM nginx:latest AS nginx
+COPY --from=frontend-builder /app/dist /usr/share/nginx/html
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
-USER sensor
-WORKDIR /home/sensor
+# Запускаем Nginx и FastAPI
+FROM backend
+COPY --from=nginx /usr/share/nginx/html /usr/share/nginx/html
 
-ADD ./cluster_app /home/sensor/cluster_app
+# Определяем порты, на которые будут прослушивать FastAPI и Nginx
+EXPOSE 80 8000
 
-# ENTRYPOINT [ "/home/sensor/cluster_app/run.sh" ]
-
-ENTRYPOINT [ "tail", "-f", "/dev/null" ]
-
-# docker build . -t sensor
-# docker run --detach --name sensor0 --net="host" sensor
-# docker exec -it sensor0 bash
+# Запускаем Nginx и FastAPI
+CMD ["sh", "-c", "gunicorn -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:8000 & nginx -g 'daemon off;'"]
