@@ -19,7 +19,7 @@ export default {
     ...mapWritableState(useUserDataStore, ['userAuthenticated', 'userProfileData']),
   },
   mounted() {
-    axios.get(axios.defaults.baseURL + "check-cookie-login", { withCredentials: true })
+    axios.get(axios.defaults.baseURL + "api/check-cookie-login", { withCredentials: true })
     .then((response) => {
             if(response.data.status === "OK"){
               this.userAuthenticated = true
